@@ -27,10 +27,8 @@ Add to your Gemfile and run the `bundle` command to install it.
 
 In an initializer, such as `config/initializers/neo4j.rb`:
 
-	neo4j_uri_string = ENV["NEO4J_URL"] || "http://localhost:7474/"
-    $neo = Neography::Rest.new(neo4j_uri_string)
-
-    neo4j_uri = URI.parse(neo4j_uri_string)
+    neo4j_uri = URI.parse(ENV["NEO4J_URL"] || "http://localhost:7474/")
+    $neo = Neography::Rest.new(neo4j_uri.to_s)
 
     Neography::Config.tap do |c|
       c.server = neo4j_uri.host
@@ -84,7 +82,7 @@ You can use `neo_properties_to_hash`, a helper method to make  things shorter:
 
 #### Relationships
 
-Let's assume that a `User` can have `Categories`:
+Let's assume that a `User` can `Like` `Movie`s:
 
 
 	# user.rb
@@ -92,8 +90,8 @@ Let's assume that a `User` can have `Categories`:
 	class User < ActiveRecord::Base
       include Neoid::Node
     
-	  has_many :user_categories
-      has_many :categories, through: :user_categories
+	  has_many :likes
+      has_many :movies, through: :likes
     
 	  def to_neo
         neo_properties_to_hash(%w(slug display_name))
@@ -101,13 +99,13 @@ Let's assume that a `User` can have `Categories`:
 	end
 
 
-	# category.rb
+	# movie.rb
 
-	class Category < ActiveRecord::Base
+	class Movie < ActiveRecord::Base
       include Neoid::Node
     
-	  has_many :user_categories
-      has_many :users, through: :user_categories
+	  has_many :likes
+      has_many :users, through: :likes
     
 	  def to_neo
         neo_properties_to_hash(%w(slug name))
@@ -115,24 +113,24 @@ Let's assume that a `User` can have `Categories`:
 	end
 
 
-	# user_category.rb
+	# like.rb
 
-	class UserCategory < ActiveRecord::Base
+	class Like < ActiveRecord::Base
 	  belongs_to :user
-      belongs_to :category
+      belongs_to :movie
 	end
 
 
 
-Now let's make the `UserCategory` model a Neoid, by including the `Neoid::Relationship` module, and define the relationship (start & end nodes and relationship type) options with `neoidable` method:
+Now let's make the `Like` model a Neoid, by including the `Neoid::Relationship` module, and define the relationship (start & end nodes and relationship type) options with `neoidable` method:
 
 
-	class UserCategory < ActiveRecord::Base
+	class Like < ActiveRecord::Base
 	  belongs_to :user
-	  belongs_to :category
+	  belongs_to :movie
 
 	  include Neoid::Relationship
-	  neoidable start_node: :user, end_node: :category, type: :categorized
+	  neoidable start_node: :user, end_node: :movie, type: :likes
 	end
 
 
@@ -141,8 +139,8 @@ Neoid adds `neo_node` and `neo_relationships` to nodes and relationships, respec
 So you could do:
 
 	user = User.create!(display_name: "elado")
-	user.categories << Category.create("Development")
-	user.categories << Category.create("Music")
+	user.movies << Movie.create("Memento")
+	user.movies << Movie.create("Inception")
 
 	user.neo_node                # => #<Neography::Node…>
 	user.neo_node.display_name   # => "elado"
@@ -165,39 +163,39 @@ Of course, you can store using the `to_neo` all the data you need in Neo4j and a
 	  m = [:]
 
 	  g.v(0)
-	    .out('categories_subref').out
-          .inE('categorized')
+	    .out('movies_subref').out
+          .inE('likes')
           .inV
           .groupCount(m).iterate()
 
 	  m.sort{-it.value}.collect{it.key.ar_id}
 	GREMLIN
 
-	category_ids = $neo.execute_script(gremlin_query)
+	movie_ids = $neo.execute_script(gremlin_query)
 
-	Category.where(id: recommended_product_ids)
+	Movie.where(id: movie_ids)
 
 
 Assuming we have another `Friendship` model which is a relationship with start/end nodes of `user` and type of `friends`,
 
-**Categories of user friends that the user doesn't have**
+**Movies of user friends that the user doesn't have**
 
 	user = User.find(1)
 
 	gremlin_query = <<-GREMLIN
 	  u = g.idx('users_index')[[ar_id:'#{user.id}']][0].toList()[0]
-	  categories = []
+	  movies = []
 
 	  u
-		.out('categorized').aggregate(categories).back(2)
-	    .out('friends').out('categories')
+		.out('likes').aggregate(movies).back(2)
+	    .out('friends').out('likes')
 		.dedup
-		.except(categories).collect{it.ar_id}
+		.except(movies).collect{it.ar_id}
 	GREMLIN
 
-	category_ids = $neo.execute_script(gremlin_query)
+	movie_ids = $neo.execute_script(gremlin_query)
 
-	Category.where(id: recommended_product_ids)
+	Movie.where(id: movie_ids)
 
 
 `[0].toList()[0]` is in order to get a pipeline object which we can actually query on.
@@ -224,9 +222,22 @@ Like Nodes, it uses an index (relationship index) to look up a relationship by A
 2. Then, it calls `neo_node` on both, in order to create the Neo4j nodes if they're not created yet, and creates the relationship with the type from the options.
 3. Add the relationship to the relationship index.
 
+## Testing
+
+Neoid tests run on a regular Neo4j database, on port 7574. You probably want to have it running on a different instance than your development one.
+
+In order to do that:
+
+Copy the Neo4j folder to a different location, **or** symlink `bin`, `lib`, `plugins`, `system`, copy `conf` and create an empty `data` folder.
+
+Then, edit `conf/neo4j-server.properties` and set the port (`org.neo4j.server.webserver.port`) from 7474 to 7574 and run the server with `bin/neo4j start`
+
+
+Download and configure [neo4j-clean-remote-db-addon](https://github.com/jexp/neo4j-clean-remote-db-addon). For the test database, leave the default `secret-key` key.
 
 
 ## TODO
 
 * `after_update` to update a node/relationship.
-* allow to disable sub reference nodes
+* Allow to disable sub reference nodes through options
+* Execute queries/scripts from model and not Neography (e.g. `Movie.neo_gremlin(gremlin_query)` with query that outputs IDs, returns a list)
