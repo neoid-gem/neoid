@@ -1,5 +1,3 @@
-# DRAFT ONLY - GEM IS NOT HOSTED YET.
-
 # Neoid
 
 Make your ActiveRecords stored and searchable on Neo4j graph database, in order to make fast graph queries that MySQL would crawl while doing them.
@@ -268,4 +266,4 @@ Please create a [new issue](https://github.com/elado/neoid/issues) if you run in
 
 ---
 
-developed by [@elado](http://twitter.com/elado) | named by [@ekampf](http://twitter.com/ekampf)
+developed by [@elado](http://twitter.com/elado)
