@@ -25,23 +25,31 @@ Add to your Gemfile and run the `bundle` command to install it.
 
 ### First app configuration:
 
-In an initializer, such as `config/initializers/neo4j.rb`:
+In an initializer, such as `config/initializers/01_neo4j.rb`:
 
-    neo4j_uri = URI.parse(ENV["NEO4J_URL"] || "http://localhost:7474/")
+	ENV["NEO4J_URL"] ||= "http://localhost:7474"
+
+	uri = URI.parse(ENV["NEO4J_URL"])
+
     $neo = Neography::Rest.new(neo4j_uri.to_s)
 
     Neography::Config.tap do |c|
-      c.server = neo4j_uri.host
-      c.port = neo4j_uri.port
+      c.server = uri.host
+      c.port = uri.port
 
-      if neo4j_uri.user && neo4j_uri.password
+      if uri.user && uri.password
         c.authentication = 'basic'
-        c.username = neo4j_uri.user
-        c.password = neo4j_uri.password
+        c.username = uri.user
+        c.password = uri.password
       end
     end
 
     Neoid.db = $neo
+
+
+`01_` in the file name is in order to get this file loaded first, before the models (files are loaded alphabetically).
+
+If you have a better idea (I bet you do!) please let me know.
 
 
 ### ActiveRecord configuration
@@ -145,6 +153,11 @@ So you could do:
 	user.neo_node                # => #<Neography::Node…>
 	user.neo_node.display_name   # => "elado"
 
+	rel = user.likes.first.neo_relationship
+	rel.start_node  # user.neo_node
+	rel.end_node    # user.movies.first.neo_node
+	rel.rel_type    # 'likes'
+
 
 ## Querying
 
@@ -171,7 +184,7 @@ Of course, you can store using the `to_neo` all the data you need in Neo4j and a
 	  m.sort{-it.value}.collect{it.key.ar_id}
 	GREMLIN
 
-	movie_ids = $neo.execute_script(gremlin_query)
+	movie_ids = Neoid.db.execute_script(gremlin_query)
 
 	Movie.where(id: movie_ids)
 
@@ -193,7 +206,7 @@ Assuming we have another `Friendship` model which is a relationship with start/e
 		.except(movies).collect{it.ar_id}
 	GREMLIN
 
-	movie_ids = $neo.execute_script(gremlin_query)
+	movie_ids = Neoid.db.execute_script(gremlin_query)
 
 	Movie.where(id: movie_ids)
 
@@ -228,16 +241,31 @@ Neoid tests run on a regular Neo4j database, on port 7574. You probably want to 
 
 In order to do that:
 
-Copy the Neo4j folder to a different location, **or** symlink `bin`, `lib`, `plugins`, `system`, copy `conf` and create an empty `data` folder.
+Copy the Neo4j folder to a different location,
+
+**or**
+
+symlink `bin`, `lib`, `plugins`, `system`, copy `conf` and create an empty `data` folder.
 
 Then, edit `conf/neo4j-server.properties` and set the port (`org.neo4j.server.webserver.port`) from 7474 to 7574 and run the server with `bin/neo4j start`
 
 
-Download and configure [neo4j-clean-remote-db-addon](https://github.com/jexp/neo4j-clean-remote-db-addon). For the test database, leave the default `secret-key` key.
+Download, install and configure [neo4j-clean-remote-db-addon](https://github.com/jexp/neo4j-clean-remote-db-addon). For the test database, leave the default `secret-key` key.
 
 
-## TODO
+## Contributing
 
+Please create a [new issue](https://github.com/elado/neoid/issues) if you run into any bugs. Contribute patches via pull requests. Write tests and make sure all tests pass.
+
+
+
+## To Do
+
+* Auto create node when creating an AR, instead of lazily-creating it
 * `after_update` to update a node/relationship.
 * Allow to disable sub reference nodes through options
-* Execute queries/scripts from model and not Neography (e.g. `Movie.neo_gremlin(gremlin_query)` with query that outputs IDs, returns a list)
+* Execute queries/scripts from model and not Neography (e.g. `Movie.neo_gremlin(gremlin_query)` with query that outputs IDs, returns a list of `Movie`s)
+
+---
+
+developed by [@elado](http://twitter.com/elado) | named by [@ekampf](http://twitter.com/ekampf)
