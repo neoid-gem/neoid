@@ -10,21 +10,21 @@ module Neoid
       def neoidable_options
         @neoidable_options
       end
+    
+      def neo_index_name
+        @index_name ||= "#{self.name.tableize}_index"
+      end
     end
   
     module InstanceMethods
       def to_neo
         {}
       end
-    
-      def neo_index_name
-        @index_name ||= "#{self.class.name.tableize}_index"
-      end
 
       protected
       def neo_properties_to_hash(*property_list)
         property_list.flatten.inject({}) { |all, property|
-          all[property] = self.send(property)
+          all[property] = self.attributes[property]
           all
         }
       end

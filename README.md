@@ -259,11 +259,11 @@ Please create a [new issue](https://github.com/elado/neoid/issues) if you run in
 
 ## To Do
 
-* Auto create node when creating an AR, instead of lazily-creating it
 * `after_update` to update a node/relationship.
 * Allow to disable sub reference nodes through options
 * Execute queries/scripts from model and not Neography (e.g. `Movie.neo_gremlin(gremlin_query)` with query that outputs IDs, returns a list of `Movie`s)
+* Rake task to index all nodes and relatiohsips in Neo4j
 
 ---
 
-developed by [@elado](http://twitter.com/elado)
+Developed by [@elado](http://twitter.com/elado)

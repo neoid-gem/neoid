@@ -2,7 +2,7 @@ module Neoid
   module Relationship
     module InstanceMethods
       def neo_find_by_id
-        Neoid.db.get_relationship_index(neo_index_name, :ar_id, self.id)
+        Neoid.db.get_relationship_index(self.class.neo_index_name, :ar_id, self.id)
       end
       
       def neo_create
@@ -19,7 +19,9 @@ module Neoid
           end_node.neo_node
         )
         
-        Neoid.db.add_relationship_to_index(neo_index_name, :ar_id, self.id, relationship)
+        Neoid.db.add_relationship_to_index(self.class.neo_index_name, :ar_id, self.id, relationship)
+
+        Neoid::logger.info "Relationship#neo_create #{self.class.name} #{self.id}, index = #{self.class.neo_index_name}"
         
         relationship
       end
@@ -30,8 +32,8 @@ module Neoid
       
       def neo_destroy
         return unless neo_relationship
-        Neoid.db.remove_relationship_from_index(neo_index_name, neo_relationship)
-        puts neo_relationship.del
+        Neoid.db.remove_relationship_from_index(self.class.neo_index_name, neo_relationship)
+        neo_relationship.del
       end
       
       def neo_relationship
@@ -40,8 +42,6 @@ module Neoid
     end
 
     def self.included(receiver)
-      Neoid.db.create_relationship_index(receiver.name.tableize)
-
       receiver.extend         Neoid::ModelAdditions::ClassMethods
       receiver.send :include, Neoid::ModelAdditions::InstanceMethods
       receiver.send :include, InstanceMethods

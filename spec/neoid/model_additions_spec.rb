@@ -77,12 +77,9 @@ describe Neoid::ModelAdditions do
   context "nodes" do
     context "create graph nodes" do
       it "should call neo_create on a neo_node for user" do
-        user = User.create(name: "Elad Ossadon")
-  
-        user.neo_find_by_id.should be_nil
-      
-        user.should_receive(:neo_create)
-        user.neo_node
+        User.any_instance.should_receive(:neo_create)
+
+        User.create(name: "Elad Ossadon")
       end
   
       it "should create a neo_node for user" do
@@ -110,7 +107,6 @@ describe Neoid::ModelAdditions do
       it "should find a neo_node for user" do
         user = User.create(name: "Elad Ossadon", slug: "elado")
       
-        user.neo_find_by_id.should be_nil
         user.neo_node.should_not be_nil
         user.neo_find_by_id.should_not be_nil
       end
