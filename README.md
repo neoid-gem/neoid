@@ -27,18 +27,18 @@ In an initializer, such as `config/initializers/01_neo4j.rb`:
 
 	ENV["NEO4J_URL"] ||= "http://localhost:7474"
 
-	uri = URI.parse(ENV["NEO4J_URL"])
+	neo4j_uri = URI.parse(ENV["NEO4J_URL"])
 
     $neo = Neography::Rest.new(uri.to_s)
 
     Neography::Config.tap do |c|
-      c.server = uri.host
-      c.port = uri.port
+      c.server = neo4j_uri.host
+      c.port = neo4j_uri.port
 
-      if uri.user && uri.password
+      if neo4j_uri.user && neo4j_uri.password
         c.authentication = 'basic'
-        c.username = uri.user
-        c.password = uri.password
+        c.username = neo4j_uri.user
+        c.password = neo4j_uri.password
       end
     end
 
