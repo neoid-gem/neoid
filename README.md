@@ -27,7 +27,7 @@ In an initializer, such as `config/initializers/01_neo4j.rb`:
 
 	ENV["NEO4J_URL"] ||= "http://localhost:7474"
 
-	uri = URI.parse(ENV["NEO4J_URL"])
+	neo4j_uri = URI.parse(ENV["NEO4J_URL"])
 
     $neo = Neography::Rest.new(neo4j_uri.to_s)
 
