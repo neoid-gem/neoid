@@ -22,5 +22,12 @@ module Neoid
     def ref_node
       @ref_node ||= Neography::Node.load(Neoid.db.get_root['self'])
     end
+    
+    def reset_cached_variables
+      [ User, Product, Expertise, Category ].each { |klass|
+        klass.instance_variable_set(:@_neo_subref_node, nil)
+      }
+      $neo_ref_node = nil
+    end
   end
 end

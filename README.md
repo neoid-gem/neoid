@@ -29,7 +29,7 @@ In an initializer, such as `config/initializers/01_neo4j.rb`:
 
 	uri = URI.parse(ENV["NEO4J_URL"])
 
-    $neo = Neography::Rest.new(neo4j_uri.to_s)
+    $neo = Neography::Rest.new(uri.to_s)
 
     Neography::Config.tap do |c|
       c.server = uri.host
@@ -235,21 +235,42 @@ Like Nodes, it uses an index (relationship index) to look up a relationship by A
 
 ## Testing
 
-Neoid tests run on a regular Neo4j database, on port 7574. You probably want to have it running on a different instance than your development one.
+In order to test your app or this gem, you need a running Neo4j database, dedicated to tests.
 
-In order to do that:
+I use port 7574 for this. To run another database locally:
 
-Copy the Neo4j folder to a different location,
+Copy the entire Neo4j database folder to a different location,
 
 **or**
 
-symlink `bin`, `lib`, `plugins`, `system`, copy `conf` and create an empty `data` folder.
+symlink `bin`, `lib`, `plugins`, `system`, copy `conf` to a single folder, and create an empty `data` folder.
 
 Then, edit `conf/neo4j-server.properties` and set the port (`org.neo4j.server.webserver.port`) from 7474 to 7574 and run the server with `bin/neo4j start`
 
+**You also want clean DB addon:**
 
 Download, install and configure [neo4j-clean-remote-db-addon](https://github.com/jexp/neo4j-clean-remote-db-addon). For the test database, leave the default `secret-key` key.
 
+## Testing Your App with Neoid (RSpec)
+
+In `environments/test.rb`, add:
+
+	ENV["NEO4J_URL"] = 'http://localhost:7574'
+
+In your `spec_helper.rb`, add the following configurations:
+
+    config.before :all do
+      RestClient.delete "#{ENV["NEO4J_URL"]}/cleandb/secret-key"
+    end
+
+    config.before :each do
+      Neoid.reset_cached_variables
+    end
+
+
+## Testing This Gem
+
+Just run `rake` from the gem folder.
 
 ## Contributing
 
