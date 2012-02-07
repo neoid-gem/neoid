@@ -29,5 +29,36 @@ module Neoid
       }
       $neo_ref_node = nil
     end
+    
+    def clean_db(confirm)
+      puts "must call with confirm: Neoid.clean_db(:yes_i_am_sure)" and return unless confirm == :yes_i_am_sure
+      
+      if indexes = db.list_node_indexes
+        indexes.values.each { |x| RestClient.delete x ['template'].gsub('/{key}/{value}', '') }
+      end
+      
+      if relationships = db.get_node_relationships(0)
+        relationships.each { |x| RestClient.delete x['self'] }
+      end
+    end
+    
+    def enabled
+      return true unless Thread.current[:neoid_use_set]
+      Thread.current[:neoid_use]
+    end
+    
+    def enabled=(flag)
+      Thread.current[:neoid_use] = flag
+      Thread.current[:neoid_use_set] = true
+    end
+    
+    alias enabled? enabled
+    
+    def use(flag = true)
+      old, self.enabled = enabled?, flag
+      yield if block_given?
+    ensure
+      self.enabled = old
+    end
   end
 end

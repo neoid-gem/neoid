@@ -6,6 +6,8 @@ module Neoid
       end
       
       def neo_create
+        return unless Neoid.enabled?
+        
         options = self.class.neoidable_options
         
         start_node = self.send(options[:start_node])
@@ -14,7 +16,7 @@ module Neoid
         return unless start_node && end_node
         
         relationship = Neography::Relationship.create(
-          options[:type],
+          options[:type].is_a?(Proc) ? options[:type].call(self) : options[:type],
           start_node.neo_node,
           end_node.neo_node
         )

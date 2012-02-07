@@ -22,9 +22,9 @@ module Neoid
       end
 
       protected
-      def neo_properties_to_hash(*property_list)
-        property_list.flatten.inject({}) { |all, property|
-          all[property] = self.attributes[property]
+      def neo_properties_to_hash(*attribute_list)
+        attribute_list.flatten.inject({}) { |all, property|
+          all[property] = self.send(property)
           all
         }
       end
