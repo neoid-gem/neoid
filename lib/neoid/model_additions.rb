@@ -25,8 +25,8 @@ module Neoid
     module InstanceMethods
       def to_neo
         if self.class.neoid_config.stored_fields
-          self.class.neoid_config.stored_fields.inject({}) { |all, field|
-            all[field] = self.send(field) rescue (raise "No field #{field} for #{self.class.name}")
+          self.class.neoid_config.stored_fields.inject({}) { |all, (field, block)|
+            all[field] = block ? block.(self) : self.send(field) rescue (raise "No field #{field} for #{self.class.name}")
             all
           }
         else

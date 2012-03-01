@@ -9,11 +9,11 @@ module Neoid
     end
     
     def stored_fields
-      @stored_fields ||= []
+      @stored_fields ||= {}
     end
     
-    def field(name)
-      self.stored_fields << name
+    def field(name, &block)
+      self.stored_fields[name] = block
     end
     
     def relationship(options)
