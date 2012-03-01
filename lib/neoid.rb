@@ -1,6 +1,7 @@
 require "neoid/version"
 require "neoid/model_config"
 require "neoid/model_additions"
+require "neoid/search_session"
 require "neoid/node"
 require "neoid/relationship"
 

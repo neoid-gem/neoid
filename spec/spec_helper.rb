@@ -1,5 +1,5 @@
 require 'neoid'
-require 'supermodel'
+require 'active_record'
 require 'neography'
 require 'rest-client'
 
@@ -23,6 +23,20 @@ RSpec.configure do |config|
   config.mock_with :rspec
 
   config.before(:all) do
+    dir = File.join(File.dirname(__FILE__), 'support/db')
+    
+    old_db = File.join(dir, 'test.sqlite3')
+    blank_db = File.join(dir, '.blank.sqlite3')
+    
+    if !File.exists?(blank_db)
+      FileUtils.cp(File.join(dir, 'test.sqlite3'), File.join(dir, '.blank.sqlite3'))
+    elsif File.exists?(old_db)
+      FileUtils.rm(old_db)
+      FileUtils.cp(File.join(dir, '.blank.sqlite3'), File.join(dir, 'test.sqlite3'))
+    end
+  end
+
+  config.before(:all) do
     Neoid.clean_db(:yes_i_am_sure) unless ENV['TRAVIS']
   end
   
@@ -31,4 +45,5 @@ RSpec.configure do |config|
   end
 end
 
+require 'support/connection'
 require 'support/models'

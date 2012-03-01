@@ -5,50 +5,20 @@ require 'fileutils'
 describe Neoid::ModelConfig do
   context "config on a model" do
     it "should store search fields" do
-      class Article1 < SuperModel::Base
-        include ActiveModel::Validations::Callbacks
-        include Neoid::Node
-        neoidable do |c|
-          c.search do |s|
-            s.index :name
-            s.index :year
-          end
-        end
-      end
-      
-      Article1.neoid_config.search_options.should_not be_nil
-      Article1.neoid_config.search_options.index_fields.keys.should =~ [ :name, :year ]
+      Article.neoid_config.search_options.should_not be_nil
+      Article.neoid_config.search_options.index_fields.keys.should =~ [ :title, :body, :year ]
     end
 
     it "should store stored fields" do
-      class Article2 < SuperModel::Base
-        include ActiveModel::Validations::Callbacks
-        include Neoid::Node
-        neoidable do |c|
-          c.field :name
-          c.field :year
-        end
-      end
-
-      Article2.neoid_config.stored_fields.should_not be_nil
-      Article2.neoid_config.stored_fields.keys.should =~ [ :name, :year ]
+      Article.neoid_config.stored_fields.should_not be_nil
+      Article.neoid_config.stored_fields.keys.should =~ [ :title, :year, :title_length ]
+      Article.neoid_config.stored_fields[:title_length].should be_a(Proc)
     end
 
     it "should store stored fields based on blocks" do
-      class Article3 < SuperModel::Base
-        include ActiveModel::Validations::Callbacks
-        include Neoid::Node
-        neoidable do |c|
-          c.field :name
-          c.field :name_length do
-            self.name ? self.name.length : 0
-          end
-        end
-      end
+      article = Article.create! title: "Hello", year: 2012
       
-      article = Article3.create! name: "Hello", year: 2012
-      
-      article.neo_node.name_length.should == article.name.length
+      article.neo_node.title_length.should == article.title.length
     end
   end
 end

@@ -32,6 +32,22 @@ module Neoid
           node
         end
       end
+
+      def search(*args)
+        query = ""
+        case args.first
+        when String
+          term = args.first
+          query = self.neoid_config.search_options.index_fields.keys.map { |k|
+            "#{k}:#{term}"
+          }.join(" OR ")
+        when Hash
+        end
+        
+        results = Neoid.db.find_node_index(self.neo_search_index_name, query)
+        
+        SearchSession.new(results, self)
+      end
     end
     
     module InstanceMethods
@@ -63,7 +79,7 @@ module Neoid
       end
       
       def neo_update
-        neo_node.set_node_properties(self.to_neo)
+        Neoid.db.set_node_properties(neo_node, self.to_neo)
         neo_search_index
         
         neo_node
@@ -78,6 +94,8 @@ module Neoid
           value = self.send(field) rescue (raise "No field #{field} for #{self.class.name}")
           Neoid.db.add_node_to_index(self.class.neo_search_index_name, field, value, neo_node.neo_id)
         }
+        
+        neo_node
       end
       
       def neo_load(node)
