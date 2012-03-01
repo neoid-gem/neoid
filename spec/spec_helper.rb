@@ -3,7 +3,7 @@ require 'supermodel'
 require 'neography'
 require 'rest-client'
 
-uri = URI.parse(ENV["NEO4J_URL"] || "http://localhost:7574")
+uri = URI.parse(ENV["NEO4J_URL"] || ENV['TRAVIS'] ? "http://localhost:7474" : "http://localhost:7574")
 $neo = Neography::Rest.new(uri.to_s)
 
 Neography::Config.tap do |c|
@@ -23,6 +23,12 @@ RSpec.configure do |config|
   config.mock_with :rspec
 
   config.before(:all) do
-    RestClient.delete "#{uri}/cleandb/secret-key"
+    Neoid.clean_db(:yes_i_am_sure)
+  end
+  
+  config.before(:each) do
+    Neoid.reset_cached_variables
   end
 end
+
+require 'support/models'

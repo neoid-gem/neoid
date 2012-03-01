@@ -14,7 +14,7 @@ Neoid offers querying Neo4j for IDs of objects and then fetch them from your RDB
 
 Add to your Gemfile and run the `bundle` command to install it.
 
-	gem 'neoid'
+	gem 'neoid', git: 'git@github.com:elado/neoid.git'
 
 
 **Requires Ruby 1.9.2 or later.**
@@ -64,25 +64,16 @@ For nodes, first include the `Neoid::Node` module in your model:
 
 This will help to create a corresponding node on Neo4j when a user is created, delete it when a user is destroyed, and update it if needed.
 
-Then, you can customize what fields will be saved on the node in Neo4j, by implementing `to_neo` method:
+Then, you can customize what fields will be saved on the node in Neo4j, inside neoidable configuration:
 
 
 	class User < ActiveRecord::Base
       include Neoid::Node
-    
-	  def to_neo
-        {
-          slug: slug,
-          display_name: display_name
-	    }
-      end
-	end
-
-You can use `neo_properties_to_hash`, a helper method to make  things shorter:
-
-
-	def to_neo
-	  neo_properties_to_hash(%w(slug display_name))
+	  
+	  neoidable do |c|
+	  	c.field :slug
+	  	c.field :display_name
+	  end
 	end
 
 
@@ -99,8 +90,9 @@ Let's assume that a `User` can `Like` `Movie`s:
 	  has_many :likes
       has_many :movies, through: :likes
     
-	  def to_neo
-        neo_properties_to_hash(%w(slug display_name))
+	  neoidable do |c|
+	  	c.field :slug
+	  	c.field :display_name
 	  end
 	end
 
@@ -113,8 +105,9 @@ Let's assume that a `User` can `Like` `Movie`s:
 	  has_many :likes
       has_many :users, through: :likes
     
-	  def to_neo
-        neo_properties_to_hash(%w(slug name))
+	  neoidable do |c|
+	  	c.field :slug
+	  	c.field :name
 	  end
 	end
 
@@ -128,7 +121,7 @@ Let's assume that a `User` can `Like` `Movie`s:
 
 
 
-Now let's make the `Like` model a Neoid, by including the `Neoid::Relationship` module, and define the relationship (start & end nodes and relationship type) options with `neoidable` method:
+Now let's make the `Like` model a Neoid, by including the `Neoid::Relationship` module, and define the relationship (start & end nodes and relationship type) options with `neoidable` config and `relationship` method:
 
 
 	class Like < ActiveRecord::Base
@@ -136,7 +129,10 @@ Now let's make the `Like` model a Neoid, by including the `Neoid::Relationship` 
 	  belongs_to :movie
 
 	  include Neoid::Relationship
-	  neoidable start_node: :user, end_node: :movie, type: :likes
+
+	  neoidable do |c|
+	  	c.relationship start_node: :user, end_node: :movie, type: :likes
+	  end
 	end
 
 
@@ -157,6 +153,28 @@ So you could do:
 	rel.rel_type    # 'likes'
 
 
+## Index for Full-Text Search
+
+Using `search` block inside a `neoidable` block, you can store certain fields.
+
+	# movie.rb
+
+	class Movie < ActiveRecord::Base
+      include Neoid::Node
+    
+	  neoidable do |c|
+	  	c.field :slug
+	  	c.field :name
+		
+		search do |s|
+		  s.index :name
+		  s.index :description
+		end
+	  end
+	end
+
+Records will be automatically indexed when inserted or updated.
+
 ## Querying
 
 You can query with all [Neography](https://github.com/maxdemarzi/neography)'s API: `traverse`, `execute_query` for Cypher, and `execute_script` for Gremlin.
@@ -165,7 +183,7 @@ You can query with all [Neography](https://github.com/maxdemarzi/neography)'s AP
 
 These examples query Neo4j using Gremlin for IDs of objects, and then fetches them from ActiveRecord with an `in` query.
 
-Of course, you can store using the `to_neo` all the data you need in Neo4j and avoid querying ActiveRecord.
+Of course, you can store using the `neoidable do |c| c.field ... end` all the data you need in Neo4j and avoid querying ActiveRecord.
 
 
 **Most popular categories**
@@ -194,7 +212,7 @@ Assuming we have another `Friendship` model which is a relationship with start/e
 	user = User.find(1)
 
 	gremlin_query = <<-GREMLIN
-	  u = g.idx('users_index')[[ar_id:'#{user.id}']][0].toList()[0]
+	  u = g.idx('users_index')[[ar_id:'#{user.id}']].next()
 	  movies = []
 
 	  u
@@ -209,8 +227,13 @@ Assuming we have another `Friendship` model which is a relationship with start/e
 	Movie.where(id: movie_ids)
 
 
-`[0].toList()[0]` is in order to get a pipeline object which we can actually query on.
+`.next()` is in order to get a vertext object which we can actually query on.
 
+
+
+### Full Text Search
+
+TODO (see specs)
 
 ## Behind The Scenes
 
@@ -219,7 +242,7 @@ Whenever the `neo_node` on nodes or `neo_relationship` on relationships is calle
 ### For Nodes:
 
 1. Ensures there's a sub reference node (read [here](http://docs.neo4j.org/chunked/stable/tutorials-java-embedded-index.html) about sub reference nodes)
-2. Creates a node based on the ActiveRecord, with the `id` attribute and all other attributes from `to_neo`
+2. Creates a node based on the ActiveRecord, with the `id` attribute and all other attributes from `neoidable`'s field list
 3. Creates a relationship between the sub reference node and the newly created node
 4. Adds the ActiveRecord `id` to a node index, pointing to the Neo4j node id, for fast lookup in the future
 
@@ -260,7 +283,7 @@ In `environments/test.rb`, add:
 In your `spec_helper.rb`, add the following configurations:
 
     config.before :all do
-      RestClient.delete "#{ENV["NEO4J_URL"]}/cleandb/secret-key"
+      Neoid.clean_db(:yes_i_am_sure)
     end
 
     config.before :each do
@@ -280,10 +303,8 @@ Please create a [new issue](https://github.com/elado/neoid/issues) if you run in
 
 ## To Do
 
-* `after_update` to update a node/relationship.
-* Allow to disable sub reference nodes through options
-* Execute queries/scripts from model and not Neography (e.g. `Movie.neo_gremlin(gremlin_query)` with query that outputs IDs, returns a list of `Movie`s)
-* Rake task to index all nodes and relatiohsips in Neo4j
+[To Do](TODO.md)
+
 
 ---
 

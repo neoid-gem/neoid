@@ -1,24 +1,37 @@
 module Neoid
   module ModelAdditions
     module ClassMethods
-      def neoidable(options)
-        @config = Neoid::ModelConfig.new
-        yield(@config) if block_given?
-        @neoidable_options = options
+      attr_reader :neoid_config
+      attr_reader :neoid_options
+      
+      def neoid_config
+        @neoid_config ||= Neoid::ModelConfig.new(self)
       end
-    
-      def neoidable_options
-        @neoidable_options
+      
+      def neoidable(options = {})
+        yield(neoid_config) if block_given?
+        @neoid_options = options
       end
     
       def neo_index_name
         @index_name ||= "#{self.name.tableize}_index"
       end
+
+      def neo_search_index_name
+        @search_index_name ||= "#{self.name.tableize}_search_index"
+      end
     end
   
     module InstanceMethods
       def to_neo
-        {}
+        if self.class.neoid_config.stored_fields
+          self.class.neoid_config.stored_fields.inject({}) { |all, field|
+            all[field] = self.send(field) rescue (raise "No field #{field} for #{self.class.name}")
+            all
+          }
+        else
+          {}
+        end
       end
 
       protected
@@ -41,6 +54,12 @@ module Neoid
           end
         end
       end
+    end
+
+    def self.included(receiver)
+      receiver.extend         ClassMethods
+      receiver.send :include, InstanceMethods
+      Neoid.models << receiver
     end
   end
 end

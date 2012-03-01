@@ -44,7 +44,6 @@ module Neoid
         return unless Neoid.enabled?
         
         data = self.to_neo.merge(ar_type: self.class.name, ar_id: self.id)
-        data.reject! { |k, v| v.nil? }
         
         node = Neography::Node.create(data)
         
@@ -57,8 +56,26 @@ module Neoid
         Neoid.db.add_node_to_index(self.class.neo_index_name, :ar_id, self.id, node)
 
         Neoid::logger.info "Node#neo_create #{self.class.name} #{self.id}, index = #{self.class.neo_index_name}"
+        
+        neo_search_index
 
         node
+      end
+      
+      def neo_update
+        neo_node.set_node_properties(self.to_neo)
+        neo_search_index
+        
+        neo_node
+      end
+      
+      def neo_search_index
+        return if self.class.neoid_config.search_options.blank? || self.class.neoid_config.search_options.index_fields.blank?
+
+        self.class.neoid_config.search_options.index_fields.keys.each { |field|
+          value = self.send(field) rescue (raise "No field #{field} for #{self.class.name}")
+          Neoid.db.add_node_to_index(self.class.neo_search_index_name, field, value, neo_node.neo_id)
+        }
       end
       
       def neo_load(node)
@@ -77,14 +94,14 @@ module Neoid
     end
       
     def self.included(receiver)
-      receiver.extend         Neoid::ModelAdditions::ClassMethods
-      receiver.send :include, Neoid::ModelAdditions::InstanceMethods
+      receiver.send :include, Neoid::ModelAdditions
       receiver.extend         ClassMethods
       receiver.send :include, InstanceMethods
       
       receiver.neo_subref_node # ensure
       
       receiver.after_create :neo_create
+      receiver.after_update :neo_update
       receiver.after_destroy :neo_destroy
     end
   end

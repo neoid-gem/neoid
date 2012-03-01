@@ -10,6 +10,10 @@ module Neoid
     attr_accessor :logger
     attr_accessor :ref_node
     
+    def models
+      @models ||= []
+    end
+    
     def db
       raise "Must set Neoid.db with a Neography::Rest instance" unless @db
       @db
@@ -24,7 +28,7 @@ module Neoid
     end
     
     def reset_cached_variables
-      [ User, Product, Expertise, Category ].each { |klass|
+      Neoid.models.each { |klass|
         klass.instance_variable_set(:@_neo_subref_node, nil)
       }
       $neo_ref_node = nil
@@ -32,14 +36,7 @@ module Neoid
     
     def clean_db(confirm)
       puts "must call with confirm: Neoid.clean_db(:yes_i_am_sure)" and return unless confirm == :yes_i_am_sure
-      
-      if indexes = db.list_node_indexes
-        indexes.values.each { |x| RestClient.delete x ['template'].gsub('/{key}/{value}', '') }
-      end
-      
-      if relationships = db.get_node_relationships(0)
-        relationships.each { |x| RestClient.delete x['self'] }
-      end
+      RestClient.delete "#{Neoid.db.protocol}#{Neoid.db.server}:#{Neoid.db.port}/cleandb/secret-key"
     end
     
     def enabled

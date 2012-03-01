@@ -8,7 +8,7 @@ module Neoid
       def neo_create
         return unless Neoid.enabled?
         
-        options = self.class.neoidable_options
+        options = self.class.neoid_options.relationship_options
         
         start_node = self.send(options[:start_node])
         end_node = self.send(options[:end_node])
@@ -44,8 +44,7 @@ module Neoid
     end
 
     def self.included(receiver)
-      receiver.extend         Neoid::ModelAdditions::ClassMethods
-      receiver.send :include, Neoid::ModelAdditions::InstanceMethods
+      receiver.send :include, Neoid::ModelAdditions
       receiver.send :include, InstanceMethods
       
       receiver.after_create :neo_create

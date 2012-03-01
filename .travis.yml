@@ -1,0 +1,4 @@
+script: "bundle exec rake neo4j:install neo4j:start spec --trace"
+rvm:
+  - 1.9.2
+  - 1.9.3
