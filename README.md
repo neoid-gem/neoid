@@ -77,6 +77,9 @@ Then, you can customize what fields will be saved on the node in Neo4j, inside n
 	  neoidable do |c|
 	  	c.field :slug
 	  	c.field :display_name
+		c.field :display_name_length do
+		  self.display_name.length
+		end
 	  end
 	end
 
