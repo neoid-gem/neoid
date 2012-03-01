@@ -23,7 +23,7 @@ RSpec.configure do |config|
   config.mock_with :rspec
 
   config.before(:all) do
-    Neoid.clean_db(:yes_i_am_sure)
+    Neoid.clean_db(:yes_i_am_sure) unless ENV['TRAVIS']
   end
   
   config.before(:each) do
