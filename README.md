@@ -231,7 +231,7 @@ Assuming we have another `Friendship` model which is a relationship with start/e
 	Movie.where(id: movie_ids)
 
 
-`.next()` is in order to get a vertext object which we can actually query on.
+`.next()` is in order to get a vertex object which we can actually query on.
 
 
 
@@ -307,7 +307,7 @@ Please create a [new issue](https://github.com/elado/neoid/issues) if you run in
 
 ## To Do
 
-[To Do](TODO.md)
+[To Do](https://github.com/elado/neoid/TODO.md)
 
 
 ---
