@@ -40,8 +40,8 @@ describe Neoid::ModelConfig do
         include Neoid::Node
         neoidable do |c|
           c.field :name
-          c.field :name_length do |item|
-            item.name ? item.name.length : 0
+          c.field :name_length do
+            self.name ? self.name.length : 0
           end
         end
       end
