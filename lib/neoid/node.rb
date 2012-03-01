@@ -72,6 +72,8 @@ module Neoid
       def neo_search_index
         return if self.class.neoid_config.search_options.blank? || self.class.neoid_config.search_options.index_fields.blank?
 
+        Neoid.db.create_node_index(self.class.neo_search_index_name, 'fulltext', 'lucene') unless (indexes = Neoid.db.list_node_indexes) && indexes[self.class.neo_search_index_name]
+
         self.class.neoid_config.search_options.index_fields.keys.each { |field|
           value = self.send(field) rescue (raise "No field #{field} for #{self.class.name}")
           Neoid.db.add_node_to_index(self.class.neo_search_index_name, field, value, neo_node.neo_id)

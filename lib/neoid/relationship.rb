@@ -8,7 +8,7 @@ module Neoid
       def neo_create
         return unless Neoid.enabled?
         
-        options = self.class.neoid_options.relationship_options
+        options = self.class.neoid_config.relationship_options
         
         start_node = self.send(options[:start_node])
         end_node = self.send(options[:end_node])

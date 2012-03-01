@@ -39,15 +39,13 @@ describe Neoid::ModelAdditions do
     it "should index item on save" do
       article = Article.create!(name: "Hello world", body: "Lorem ipsum dolor sit amet", year: 2012)
       
-      # # Neoid.db.should_receive(:add_node_to_index).with("articles_search_index", "name", article.name)
-      # # Neoid.db.should_receive(:add_node_to_index).with("articles_search_index", "name", article.body)
-      
       [
-        "name:test",
+        "name:Hello",
         "year:2012",
-        "name:test AND year:2012"
+        "name:Hello AND year:2012"
       ].each { |q|
-        results = Neoid.db.find_node_index("articles_search_index", "name:hello")
+        results = Neoid.db.find_node_index("articles_search_index", q)
+        results.should_not be_nil
         results.length.should == 1
         Neoid.db.send(:get_id, results).should == article.neo_node.neo_id
       }
