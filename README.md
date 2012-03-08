@@ -173,7 +173,7 @@ Using `search` block inside a `neoidable` block, you can store certain fields.
 	  	c.field :slug
 	  	c.field :name
 		
-		search do |s|
+		c.search do |s|
 		  s.index :name
 		  s.index :description
 		end
