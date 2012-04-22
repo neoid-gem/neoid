@@ -137,9 +137,8 @@ Now let's make the `Like` model a Neoid, by including the `Neoid::Relationship` 
 
 	  include Neoid::Relationship
 
-	  neoidable do |c|
-	  	c.relationship start_node: :user, end_node: :movie, type: :likes
-	  end
+	  neoidable start_node: :user, end_node: :movie, type: :likes
+	  
 	end
 
 
