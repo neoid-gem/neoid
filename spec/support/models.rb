@@ -1,23 +1,23 @@
 class User < ActiveRecord::Base
   include ActiveModel::Validations::Callbacks
-  
+
   has_many :likes
-  has_many :movies, through: :likes
-  
+  has_many :movies, :through => :likes
+
   def likes?(movie)
-    likes.where(movie_id: movie.id).exists?
+    likes.where(:movie_id=> movie.id).exists?
   end
-  
+
   def like!(movie)
     movies << movie unless likes?(movie)
   end
-  
+
   def unlike!(movie)
-    likes.where(movie_id: movie.id, user_id: self.id).destroy_all
+    likes.where(:movie_id=> movie.id, :user_id=> self.id).destroy_all
   end
-  
+
   include Neoid::Node
-  
+
   neoidable do |c|
     c.field :name
     c.field :slug
@@ -26,12 +26,12 @@ end
 
 class Movie < ActiveRecord::Base
   include ActiveModel::Validations::Callbacks
-  
+
   has_many :likes
-  has_many :users, through: :likes
-  
+  has_many :users, :through=> :likes
+
   include Neoid::Node
-  
+
   neoidable do |c|
     c.field :name
     c.field :slug
@@ -41,14 +41,14 @@ end
 
 class Like < ActiveRecord::Base
   include ActiveModel::Validations::Callbacks
-  
+
   belongs_to :user
   belongs_to :movie
-  
+
   include Neoid::Relationship
-  
+
   neoidable do |c|
-    c.relationship start_node: :user, end_node: :movie, type: :likes
+    c.relationship :start_node=> :user, :end_node=> :movie, :type => :likes
     c.field :rate
   end
 end

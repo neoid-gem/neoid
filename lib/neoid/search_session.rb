@@ -4,17 +4,17 @@ module Neoid
       @response = response || []
       @model = model
     end
-    
+
     def hits
       @response.map { |x|
         Neography::Node.new(x)
       }
     end
-    
+
     def results
       ids = @response.collect { |x| x['data']['ar_id'] }
-      
-      @model.where(id: ids)
+
+      @model.where(id=> ids)
     end
   end
 end
