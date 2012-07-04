@@ -36,14 +36,22 @@ class Movie < ActiveRecord::Base
     c.field :name
     c.field :slug
     c.field :year
+
+    c.search do |s|
+      s.fulltext :name
+
+      s.index :name
+      s.index :slug
+      s.index :year
+    end
   end
 end
 
 class Like < ActiveRecord::Base
   include ActiveModel::Validations::Callbacks
   
-  belongs_to :user
-  belongs_to :movie
+  belongs_to :user, dependent: :destroy
+  belongs_to :movie, dependent: :destroy
   
   include Neoid::Relationship
   
@@ -64,6 +72,8 @@ class Article < ActiveRecord::Base
     end
 
     c.search do |s|
+      s.fulltext :title
+
       s.index :title
       s.index :body
       s.index :year

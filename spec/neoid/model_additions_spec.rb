@@ -60,7 +60,7 @@ describe Neoid::ModelAdditions do
     
     it "should delete a relationship on deleting a record" do
       user.like! movie
-      like = user.likes.first
+      like = user.likes.last
       
       relationship_neo_id = like.neo_relationship.neo_id
       

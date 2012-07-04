@@ -168,15 +168,19 @@ Using `search` block inside a `neoidable` block, you can store certain fields.
 
 	class Movie < ActiveRecord::Base
       include Neoid::Node
-    
+
 	  neoidable do |c|
-	  	c.field :slug
-	  	c.field :name
-		
-		c.search do |s|
-		  s.index :name
-		  s.index :description
-		end
+	    c.field :slug
+	    c.field :name
+
+	    c.search do |s|
+	      # full-text index fields
+	      s.fulltext :name
+	      s.fulltext :description
+
+	      # just index for exact matches
+	      s.index :year
+	    end
 	  end
 	end
 
@@ -237,10 +241,20 @@ Assuming we have another `Friendship` model which is a relationship with start/e
 `.next()` is in order to get a vertex object which we can actually query on.
 
 
-
 ### Full Text Search
 
-TODO (see specs)
+	# will match all movies with full-text match for name/description. returns ActiveRecord instanced
+	Movie.search("*hello*").results
+
+	# same as above but returns hashes with the values that were indexed on Neo4j
+	Movie.search("*hello*").hits
+
+	# search in multiple types
+	Neoid.search([Movie, User], "hello")
+
+	# search with exact matches (pass a hash of field/value)
+	Movie.search(year: 2013).results
+
 
 ## Behind The Scenes
 

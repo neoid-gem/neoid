@@ -35,13 +35,21 @@ module Neoid
     def index_fields
       @index_fields ||= {}
     end
+
+    def fulltext_fields
+      @fulltext_fields ||= {}
+    end
     
-    def index(field, options = {})
-      index_fields[field] = options
+    def index(field, options = {}, &block)
+      index_fields[field] = options.merge(block: block)
+    end
+    
+    def fulltext(field, options = {}, &block)
+      fulltext_fields[field] = options.merge(block: block)
     end
     
     def inspect
-      "#<Neoid::SearchConfig @index_fields=#{index_fields.inspect}>"
+      "#<Neoid::SearchConfig @index_fields=#{index_fields.inspect} @fulltext_fields=#{fulltext_fields.inspect}>"
     end
   end
 end

@@ -33,20 +33,8 @@ module Neoid
         end
       end
 
-      def search(*args)
-        query = ""
-        case args.first
-        when String
-          term = args.first
-          query = self.neoid_config.search_options.index_fields.keys.map { |k|
-            "#{k}:#{term}"
-          }.join(" OR ")
-        when Hash
-        end
-        
-        results = Neoid.db.find_node_index(self.neo_search_index_name, query)
-        
-        SearchSession.new(results, self)
+      def search(term, options = {})
+        Neoid.search(self, term, options)
       end
     end
     
@@ -86,16 +74,32 @@ module Neoid
       end
       
       def neo_search_index
-        return if self.class.neoid_config.search_options.blank? || self.class.neoid_config.search_options.index_fields.blank?
+        return if self.class.neoid_config.search_options.blank? || (
+          self.class.neoid_config.search_options.index_fields.blank? &&
+          self.class.neoid_config.search_options.fulltext_fields.blank?
+        )
 
-        Neoid.db.create_node_index(self.class.neo_search_index_name, 'fulltext', 'lucene') unless (indexes = Neoid.db.list_node_indexes) && indexes[self.class.neo_search_index_name]
+        Neoid.ensure_default_fulltext_search_index
 
-        self.class.neoid_config.search_options.index_fields.keys.each { |field|
-          value = self.send(field) rescue (raise "No field #{field} for #{self.class.name}")
-          Neoid.db.add_node_to_index(self.class.neo_search_index_name, field, value, neo_node.neo_id)
+        Neoid.db.add_node_to_index(DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, 'ar_type', self.class.name, neo_node.neo_id)
+
+        self.class.neoid_config.search_options.fulltext_fields.each { |field, options|
+          Neoid.db.add_node_to_index(DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, "#{field}_fulltext", neo_helper_get_field_value(field, options), neo_node.neo_id)
         }
-        
+
+        self.class.neoid_config.search_options.index_fields.each { |field, options|
+          Neoid.db.add_node_to_index(DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, field, neo_helper_get_field_value(field, options), neo_node.neo_id)
+        }
+
         neo_node
+      end
+
+      def neo_helper_get_field_value(field, options = {})
+        if options[:block]
+          options[:block].call
+        else
+          self.send(field) rescue (raise "No field #{field} for #{self.class.name}")
+        end
       end
       
       def neo_load(node)
@@ -110,6 +114,7 @@ module Neoid
         return unless neo_node
         Neoid.db.remove_node_from_index(self.class.neo_index_name, neo_node)
         neo_node.del
+        _reset_neo_representation
       end
     end
       

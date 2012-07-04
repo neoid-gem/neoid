@@ -6,6 +6,8 @@ require "neoid/node"
 require "neoid/relationship"
 
 module Neoid
+  DEFAULT_FULLTEXT_SEARCH_INDEX_NAME = 'neoid_default_search_index'
+
   class << self
     attr_accessor :db
     attr_accessor :logger
@@ -21,7 +23,7 @@ module Neoid
     end
     
     def logger
-      @logger ||= Logger.new(ENV['NEOID_LOG'] ? $stdout : '/dev/null')
+      @logger ||= Logger.new(ENV['NEOID_LOG'] ? ENV['NEOID_LOG_FILE'] || $stdout : '/dev/null')
     end
     
     def ref_node
@@ -41,13 +43,13 @@ module Neoid
     end
     
     def enabled
-      return true unless Thread.current[:neoid_use_set]
-      Thread.current[:neoid_use]
+      return true unless @neoid_use_set
+      @neoid_use
     end
     
     def enabled=(flag)
-      Thread.current[:neoid_use] = flag
-      Thread.current[:neoid_use_set] = true
+      @neoid_use = flag
+      @neoid_use_set = true
     end
     
     alias enabled? enabled
@@ -58,5 +60,80 @@ module Neoid
     ensure
       self.enabled = old
     end
+
+    # create a fulltext index if not exists
+    def ensure_default_fulltext_search_index
+      Neoid.db.create_node_index(DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, 'fulltext', 'lucene') unless (indexes = Neoid.db.list_node_indexes) && indexes[DEFAULT_FULLTEXT_SEARCH_INDEX_NAME]
+    end
+
+    def search(types, term, options = {})
+      options = options.reverse_merge(limit: 15)
+
+      types = [*types]
+
+      query = []
+
+      types.each { |type|
+        query_for_type = []
+
+        query_for_type << "ar_type:#{type.name}"
+
+        case term
+        when String
+          search_in_fields = type.neoid_config.search_options.fulltext_fields.keys
+          next if search_in_fields.empty?
+          query_for_type << search_in_fields.map{ |field| generate_field_query(field, term, true) }.join(" OR ")
+        when Hash
+          term.each { |field, value|
+            query_for_type << generate_field_query(field, value, false)
+          }
+        end
+
+        query << "(#{query_for_type.join(") AND (")})"
+      }
+
+      query = "(#{query.join(") OR (")})"
+
+      logger.info "Neoid query #{query}"
+
+      gremlin_query = <<-GREMLIN
+        #{options[:before_query]}
+
+        idx = g.getRawGraph().index().forNodes('#{DEFAULT_FULLTEXT_SEARCH_INDEX_NAME}')
+        hits = idx.query('#{sanitize_query_for_gremlin(query)}')
+
+        hits = #{options[:limit] ? "hits.take(#{options[:limit]})" : "hits"}
+
+        #{options[:after_query]}
+      GREMLIN
+
+      logger.info "[NEOID] search:\n#{gremlin_query}"
+
+      results = Neoid.db.execute_script(gremlin_query)
+
+      # logger.info "[NEOID] > results: #{results}"
+
+      SearchSession.new(results, *types)
+    end
+
+    private
+      def sanitize_term(term)
+        # TODO - case sensitive?
+        term.downcase
+      end
+
+      def sanitize_query_for_gremlin(query)
+        # TODO - case sensitive?
+        query.gsub("'", "\\\\'")
+      end
+
+      def generate_field_query(field, term, fulltext = false)
+        term = term.to_s if term
+        return "" if term.nil? || term.empty?
+
+        fulltext = fulltext ? "_fulltext" : nil
+
+        "(" + term.split(/\s+/).reject(&:empty?).map{ |t| "#{field}#{fulltext}:#{sanitize_term(t)}" }.join(" AND ") + ")"
+      end
   end
 end

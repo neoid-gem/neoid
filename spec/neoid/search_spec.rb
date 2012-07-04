@@ -5,10 +5,6 @@ describe Neoid::ModelAdditions do
   context "search" do
     let(:index_name) { "articles_search_index_#{Time.now.to_f.to_s.gsub('.', '')}" }
     
-    before(:each) do
-      Article.stub!(:neo_search_index_name).and_return(index_name)
-    end
-    
     it "should index and find node in fulltext" do
       Neoid.db.create_node_index(index_name, "fulltext", "lucene")
       
@@ -35,7 +31,7 @@ describe Neoid::ModelAdditions do
         "year:2012",
         "title:Hello AND year:2012"
       ].each { |q|
-        results = Neoid.db.find_node_index(index_name, q)
+        results = Neoid.db.find_node_index(Neoid::DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, q)
         results.should_not be_nil
         results.length.should == 1
         Neoid.db.send(:get_id, results).should == article.neo_node.neo_id
@@ -53,10 +49,41 @@ describe Neoid::ModelAdditions do
         Article.search("hello").hits.should == [ article.neo_node ]
       end
       
-      it "should find results" do
+      it "should find results with a search string" do
         article = Article.create!(title: "Hello world", body: "Lorem ipsum dolor sit amet", year: 2012)
 
         Article.search("hello").results.should == [ article ]
+      end
+      
+      it "should find results with a hash" do
+        articles = [
+          Article.create!(title: "How to draw manga", body: "Lorem ipsum dolor sit amet", year: 2012),
+          Article.create!(title: "Manga x", body: "Lorem ipsum dolor sit amet", year: 2013)
+        ]
+
+
+        Article.search(year: 2012).results.should == [ articles[0] ]
+      end
+    end
+
+    context "search in multiple types" do
+      before :each do
+        @articles = [
+          Article.create!(title: "How to draw manga", body: "Lorem ipsum dolor sit amet", year: 2012),
+          Article.create!(title: "Manga x", body: "Lorem ipsum dolor sit amet", year: 2012)
+        ]
+
+        @movies = [
+          Movie.create!(name: "Anime is not Manga", slug: "anime")
+        ]
+      end
+
+      it "should search in multiple types" do
+        Neoid.search([Article, Movie], "manga").results.should =~ @articles + @movies
+      end
+
+      it "should search in single type when specified" do
+        Neoid.search([Article], "manga").results.should =~ @articles
       end
     end
   end

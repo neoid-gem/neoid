@@ -16,10 +16,6 @@ module Neoid
       def neo_index_name
         @index_name ||= "#{self.name.tableize}_index"
       end
-
-      def neo_search_index_name
-        @search_index_name ||= "#{self.name.tableize}_search_index"
-      end
     end
   
     module InstanceMethods
@@ -54,10 +50,13 @@ module Neoid
           if results
             neo_load(results.first['self'])
           else
-            node = neo_create
-            node
+            neo_create
           end
         end
+      end
+
+      def _reset_neo_representation
+        @_neo_representation = nil
       end
     end
 

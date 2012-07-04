@@ -36,6 +36,8 @@ module Neoid
         return unless neo_relationship
         Neoid.db.remove_relationship_from_index(self.class.neo_index_name, neo_relationship)
         neo_relationship.del
+        _reset_neo_representation
+        true
       end
       
       def neo_relationship
