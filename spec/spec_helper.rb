@@ -61,3 +61,5 @@ end
 
 require 'support/connection'
 require 'support/models'
+
+Neoid.initialize_all

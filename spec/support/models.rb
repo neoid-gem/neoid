@@ -3,6 +3,8 @@ class User < ActiveRecord::Base
   
   has_many :likes
   has_many :movies, through: :likes
+
+  has_many :user_follows
   
   def likes?(movie)
     likes.where(movie_id: movie.id).exists?
@@ -44,6 +46,19 @@ class Movie < ActiveRecord::Base
       s.index :slug
       s.index :year
     end
+  end
+end
+
+class UserFollow < ActiveRecord::Base
+  include ActiveModel::Validations::Callbacks
+
+  belongs_to :user, dependent: :destroy
+  belongs_to :item, polymorphic: true
+  
+  include Neoid::Relationship
+  
+  neoidable do |c|
+    c.relationship start_node: :user, end_node: :item, type: :follows
   end
 end
 

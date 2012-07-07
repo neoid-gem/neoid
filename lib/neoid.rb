@@ -1,9 +1,10 @@
-require "neoid/version"
-require "neoid/model_config"
-require "neoid/model_additions"
-require "neoid/search_session"
-require "neoid/node"
-require "neoid/relationship"
+require 'neoid/version'
+require 'neoid/model_config'
+require 'neoid/model_additions'
+require 'neoid/search_session'
+require 'neoid/node'
+require 'neoid/relationship'
+require 'neoid/railtie' if defined?(Rails)
 
 module Neoid
   DEFAULT_FULLTEXT_SEARCH_INDEX_NAME = 'neoid_default_search_index'
@@ -12,9 +13,29 @@ module Neoid
     attr_accessor :db
     attr_accessor :logger
     attr_accessor :ref_node
+    attr_accessor :env_loaded
     
     def models
       @models ||= []
+    end
+    
+    def node_models
+      @node_models ||= []
+    end
+    
+    def relationship_models
+      @relationship_models ||= []
+    end
+
+    def config
+      @config ||= {}
+    end
+
+    def initialize_all
+      @env_loaded = true
+      relationship_models.each do |rel_model|
+        Relationship.initialize_relationship(rel_model)
+      end
     end
     
     def db

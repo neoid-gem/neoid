@@ -116,12 +116,29 @@ module Neoid
         neo_node.del
         _reset_neo_representation
       end
+
+      def neo_after_relationship_remove(relationship)
+        relationship.neo_destroy
+      end
+
+      def neo_before_relationship_through_remove(record)
+        rel_model, foreign_key_of_owner, foreign_key_of_record = Neoid.config[:relationship_meta_data][self.class.name.to_s][record.class.name.to_s]
+        rel_model = rel_model.to_s.constantize
+        @__neo_temp_rels ||= {}
+        @__neo_temp_rels[record] = rel_model.where(foreign_key_of_owner => self.id, foreign_key_of_record => record.id).first
+      end
+
+      def neo_after_relationship_through_remove(record)
+        @__neo_temp_rels.each { |record, relationship| relationship.neo_destroy }
+        @__neo_temp_rels.delete(record)
+      end
     end
       
     def self.included(receiver)
       receiver.send :include, Neoid::ModelAdditions
       receiver.extend         ClassMethods
       receiver.send :include, InstanceMethods
+      Neoid.node_models << receiver
       
       receiver.neo_subref_node # ensure
       

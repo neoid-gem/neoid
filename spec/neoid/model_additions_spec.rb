@@ -70,5 +70,59 @@ describe Neoid::ModelAdditions do
       
       Neography::Relationship.load(relationship_neo_id).should be_nil
     end
+
+    it "should update neo4j on manual set of a collection" do
+      movies = [
+        Movie.create(name: "Memento"),
+        Movie.create(name: "The Prestige"),
+        Movie.create(name: "The Dark Knight"),
+        Movie.create(name: "Spiderman")
+      ]
+
+      user.neo_node.outgoing(:likes).length.should == 0
+
+      expect {
+        user.movies = movies
+      }.to change{ user.neo_node.outgoing(:likes).length }.to(movies.length)
+
+      expect { expect {
+        user.movies -= movies[0..1]
+      }.to change{ user.movies.count }.by(-2)
+      }.to change{ user.neo_node.outgoing(:likes).length }.by(-2)
+
+      expect {
+        user.movies = []
+      }.to change{ user.neo_node.outgoing(:likes).length }.to(0)
+
+      expect {
+        user.movie_ids = movies[0...2].collect(&:id)
+      }.to change{ user.neo_node.outgoing(:likes).length }.to(2)
+    end
+  end
+
+  context "polymorphic relationship" do
+    let(:user) { User.create(name: "Elad Ossadon", slug: "elado") }
+
+    it "description" do
+      followed = [
+        User.create(name: "Some One", slug: "someone"),
+        Movie.create(name: "The Prestige"),
+        Movie.create(name: "The Dark Knight")
+      ]
+
+      expect {
+        followed.each do |item|
+          user.user_follows.create(item: item)
+        end
+      }.to change{ user.neo_node.outgoing(:follows).length }.to(followed.length)
+
+      expect {
+        user.user_follows = user.user_follows[0...1]
+      }.to change{ user.neo_node.outgoing(:follows).length }.to(1)
+
+      expect {
+        user.user_follows = []
+      }.to change{ user.neo_node.outgoing(:follows).length }.to(0)
+    end
   end
 end
