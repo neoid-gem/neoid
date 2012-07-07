@@ -112,6 +112,7 @@ module Neoid
     
       def neo_destroy
         return unless neo_node
+        Neoid.db.remove_node_from_index(DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, neo_node)
         Neoid.db.remove_node_from_index(self.class.neo_index_name, neo_node)
         neo_node.del
         _reset_neo_representation

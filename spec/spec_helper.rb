@@ -2,7 +2,6 @@ require 'neoid'
 require 'active_record'
 require 'neography'
 require 'rest-client'
-require 'database_cleaner'
 
 uri = URI.parse(ENV["NEO4J_URL"] ? ENV["NEO4J_URL"] : ENV['TRAVIS'] ? "http://localhost:7474" : "http://localhost:7574")
 $neo = Neography::Rest.new(uri.to_s)
@@ -23,19 +22,6 @@ Neoid.db = $neo
 RSpec.configure do |config|
   config.mock_with :rspec
 
-  config.before(:suite) do
-    DatabaseCleaner.strategy = :transaction
-    DatabaseCleaner.clean_with(:truncation)
-  end
-
-  config.before(:each) do
-    DatabaseCleaner.start
-  end
-
-  config.after(:each) do
-    DatabaseCleaner.clean
-  end
-
   config.before(:all) do
     dir = File.join(File.dirname(__FILE__), 'support/db')
     
@@ -54,7 +40,8 @@ RSpec.configure do |config|
   end
   
   config.before(:each) do
-    Neoid.clean_db(:yes_i_am_sure) unless ENV['TRAVIS']
+    Neoid.models.map(&:destroy_all)
+    # Neoid.clean_db(:yes_i_am_sure) unless ENV['TRAVIS']
     Neoid.reset_cached_variables
   end
 end

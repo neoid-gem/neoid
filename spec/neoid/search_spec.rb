@@ -24,12 +24,13 @@ describe Neoid::ModelAdditions do
     end
     
     it "should index item on save" do
-      article = Article.create!(title: "Hello world", body: "Lorem ipsum dolor sit amet", year: 2012)
-      
+      r = rand(1...10000000000)
+      article = Article.create!(title: "Hello world #{r}", body: "Lorem ipsum dolor sit amet", year: r)
+
       [
-        "title:Hello",
-        "year:2012",
-        "title:Hello AND year:2012"
+        "title:#{r}",
+        "year:#{r}",
+        "title:#{r} AND year:#{r}"
       ].each { |q|
         results = Neoid.db.find_node_index(Neoid::DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, q)
         results.should_not be_nil
