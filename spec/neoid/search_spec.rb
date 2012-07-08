@@ -24,7 +24,7 @@ describe Neoid::ModelAdditions do
     end
     
     it "should index item on save" do
-      r = rand(1...10000000000)
+      r = rand(1...1000000)
       article = Article.create!(title: "Hello world #{r}", body: "Lorem ipsum dolor sit amet", year: r)
 
       [
