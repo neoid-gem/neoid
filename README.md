@@ -323,7 +323,7 @@ Please create a [new issue](https://github.com/elado/neoid/issues) if you run in
 
 ## To Do
 
-[To Do](https://github.com/elado/neoid/TODO.md)
+[To Do](https://github.com/elado/neoid/blob/master/TODO.md)
 
 
 ---
