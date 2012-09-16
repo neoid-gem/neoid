@@ -10,6 +10,7 @@ module Neoid
         @_neo_destroyed = false
         
         options = self.class.neoid_config.relationship_options
+        data = self.to_neo
         
         start_node = self.send(options[:start_node])
         end_node = self.send(options[:end_node])
@@ -19,7 +20,8 @@ module Neoid
         relationship = Neography::Relationship.create(
           options[:type].is_a?(Proc) ? options[:type].call(self) : options[:type],
           start_node.neo_node,
-          end_node.neo_node
+          end_node.neo_node,
+          data.blank? ? nil : data
         )
         
         Neoid.db.add_relationship_to_index(self.class.neo_index_name, :ar_id, self.id, relationship)
@@ -27,6 +29,12 @@ module Neoid
         Neoid::logger.info "Relationship#neo_create #{self.class.name} #{self.id}, index = #{self.class.neo_index_name}"
         
         relationship
+      end
+      
+      def neo_update
+        Neoid.db.set_relationship_properties(neo_relationship, self.to_neo)
+        
+        neo_relationship
       end
       
       def neo_load(relationship)
@@ -56,6 +64,7 @@ module Neoid
       receiver.send :include, InstanceMethods
       
       receiver.after_create :neo_create
+      receiver.after_update :neo_update
       receiver.after_destroy :neo_destroy
 
       if Neoid.env_loaded
