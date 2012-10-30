@@ -15,11 +15,15 @@ module Neoid
         end_node = self.send(options[:end_node])
         
         return unless start_node && end_node
+
+        data = self.to_neo.merge(ar_type: self.class.name, ar_id: self.id)
+        data.reject! { |k, v| v.nil? }
         
         relationship = Neography::Relationship.create(
           options[:type].is_a?(Proc) ? options[:type].call(self) : options[:type],
           start_node.neo_node,
-          end_node.neo_node
+          end_node.neo_node,
+          data
         )
         
         Neoid.db.add_relationship_to_index(self.class.neo_index_name, :ar_id, self.id, relationship)
@@ -46,6 +50,10 @@ module Neoid
         true
       end
       
+      def neo_update
+        Neoid.db.set_relationship_properties(neo_relationship, self.to_neo)
+      end
+
       def neo_relationship
         _neo_representation
       end
@@ -57,6 +65,7 @@ module Neoid
       
       receiver.after_create :neo_create
       receiver.after_destroy :neo_destroy
+      receiver.after_update :neo_update
 
       if Neoid.env_loaded
         initialize_relationship receiver

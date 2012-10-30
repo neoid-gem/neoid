@@ -48,15 +48,24 @@ module Neoid
         return unless Neoid.enabled?
         
         data = self.to_neo.merge(ar_type: self.class.name, ar_id: self.id)
+        data.reject! { |k, v| v.nil? }
         
         node = Neography::Node.create(data)
         
-        Neography::Relationship.create(
-          self.class.neo_subref_node_rel_type,
-          self.class.neo_subref_node,
-          node
-        )
-        
+        retires = 2
+        begin
+          Neography::Relationship.create(
+            self.class.neo_subref_node_rel_type,
+            self.class.neo_subref_node,
+            node
+          )
+        rescue
+          # something must've happened to the cached subref node, reset and retry
+          @_neo_subref_node = nil
+          retires -= 1
+          retry if retires > 0
+        end
+
         Neoid.db.add_node_to_index(self.class.neo_index_name, :ar_id, self.id, node)
 
         Neoid::logger.info "Node#neo_create #{self.class.name} #{self.id}, index = #{self.class.neo_index_name}"
@@ -69,8 +78,6 @@ module Neoid
       def neo_update
         Neoid.db.set_node_properties(neo_node, self.to_neo)
         neo_search_index
-        
-        neo_node
       end
       
       def neo_search_index

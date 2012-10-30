@@ -21,7 +21,7 @@ module Neoid
     module InstanceMethods
       def to_neo
         if self.class.neoid_config.stored_fields
-          self.class.neoid_config.stored_fields.inject({}) { |all, (field, block)|
+          hash = self.class.neoid_config.stored_fields.inject({}) do |all, (field, block)|
             all[field] = if block
               instance_eval(&block)
             else
@@ -29,7 +29,9 @@ module Neoid
             end
             
             all
-          }
+          end
+
+          hash.reject { |k, v| v.nil? }
         else
           {}
         end
