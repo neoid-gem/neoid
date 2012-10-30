@@ -4,6 +4,7 @@ require 'neoid/model_additions'
 require 'neoid/search_session'
 require 'neoid/node'
 require 'neoid/relationship'
+require 'neoid/database_cleaner'
 require 'neoid/railtie' if defined?(Rails)
 
 module Neoid
@@ -60,7 +61,9 @@ module Neoid
     
     def clean_db(confirm)
       puts "must call with confirm: Neoid.clean_db(:yes_i_am_sure)" and return unless confirm == :yes_i_am_sure
-      RestClient.delete "#{Neoid.db.protocol}#{Neoid.db.server}:#{Neoid.db.port}/cleandb/secret-key"
+      # RestClient.delete "#{Neoid.db.protocol}#{Neoid.db.server}:#{Neoid.db.port}/cleandb/secret-key"
+
+      Neoid::NeoDatabaseCleaner.clean_db
     end
     
     def enabled
