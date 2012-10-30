@@ -68,7 +68,7 @@ describe Neoid::ModelAdditions do
       
       user.unlike! movie
       
-      Neography::Relationship.load(relationship_neo_id).should be_nil
+      expect { Neography::Relationship.load(relationship_neo_id) }.to raise_error(Neography::RelationshipNotFoundException)
     end
 
     it "should update neo4j on manual set of a collection" do

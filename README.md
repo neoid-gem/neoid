@@ -34,7 +34,7 @@ In an initializer, such as `config/initializers/01_neo4j.rb`:
 
     $neo = Neography::Rest.new(uri.to_s)
 
-    Neography::Config.tap do |c|
+    Neography.configure do |c|
       c.server = uri.host
       c.port = uri.port
 

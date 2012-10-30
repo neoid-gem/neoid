@@ -6,7 +6,7 @@ require 'rest-client'
 uri = URI.parse(ENV["NEO4J_URL"] ? ENV["NEO4J_URL"] : ENV['TRAVIS'] ? "http://localhost:7474" : "http://localhost:7574")
 $neo = Neography::Rest.new(uri.to_s)
 
-Neography::Config.tap do |c|
+Neography.configure do |c|
   c.server = uri.host
   c.port = uri.port
 
