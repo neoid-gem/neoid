@@ -68,7 +68,7 @@ describe Neoid::ModelAdditions do
       
       user.unlike! movie
       
-      Neography::Relationship.load(relationship_neo_id).should be_nil
+      lambda{ Neography::Relationship.load(relationship_neo_id) }.should raise_error
     end
 
     it "should update neo4j on manual set of a collection" do

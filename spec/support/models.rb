@@ -72,7 +72,7 @@ class Like < ActiveRecord::Base
   
   neoidable do |c|
     c.relationship start_node: :user, end_node: :movie, type: :likes
-    c.field :rate
+    #c.field :rate
   end
 end
 

@@ -41,7 +41,11 @@ module Neoid
     module InstanceMethods
       def neo_find_by_id
         Neoid::logger.info "Node#neo_find_by_id #{self.class.neo_index_name} #{self.id}"
-        Neoid.db.get_node_index(self.class.neo_index_name, :ar_id, self.id)
+        begin
+          Neoid.db.get_node_index(self.class.neo_index_name, :ar_id, self.id)
+        rescue
+          nil
+        end
       end
       
       def neo_create
