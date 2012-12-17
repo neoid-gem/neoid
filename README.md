@@ -314,10 +314,6 @@ symlink `bin`, `lib`, `plugins`, `system`, copy `conf` to a single folder, and c
 
 Then, edit `conf/neo4j-server.properties` and set the port (`org.neo4j.server.webserver.port`) from 7474 to 7574 and run the server with `bin/neo4j start`
 
-**You also want clean DB addon:**
-
-Download, install and configure [neo4j-clean-remote-db-addon](https://github.com/jexp/neo4j-clean-remote-db-addon). For the test database, leave the default `secret-key` key.
-
 ## Testing Your App with Neoid (RSpec)
 
 In `environments/test.rb`, add:
