@@ -1,0 +1,6 @@
+sqlite3:
+  adapter: sqlite3
+  database: ":memory:"
+  encoding: utf8
+  charset: utf8
+  timeout: 5000

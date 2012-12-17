@@ -11,29 +11,31 @@ module Neoid
       def neo_subref_node
         @_neo_subref_node ||= begin
           Neoid::logger.info "Node#neo_subref_node #{neo_subref_rel_type}"
-          
-          subref_node_query = Neoid.ref_node.outgoing(neo_subref_rel_type)
 
-          if subref_node_query.to_a.blank?
-            Neoid::logger.info "Node#neo_subref_node not existing, creating #{neo_subref_rel_type}"
-            
-            node = Neography::Node.create(type: self.name, name: neo_subref_rel_type)
-            Neography::Relationship.create(
-              neo_subref_rel_type,
-              Neoid.ref_node,
-              node
-            )
-          else
-            Neoid::logger.info "Node#neo_subref_node existing, fetching #{neo_subref_rel_type}"
-            node = subref_node_query.first
-            Neoid::logger.info "Node#neo_subref_node existing, fetched #{neo_subref_rel_type}"
-          end
-        
+          gremlin_query = <<-GREMLIN
+            q = g.v(0).out(neo_subref_rel_type);
+
+            subref = q.hasNext() ? q.next() : null;
+
+            if (!subref) {
+              subref = g.addVertex([name: neo_subref_rel_type, type: name]);
+              g.addEdge(g.v(0), subref, neo_subref_rel_type);
+            }
+
+            g.createManualIndex(neo_index_name, Vertex.class);
+
+            subref
+          GREMLIN
+
+          Neoid.logger.info "subref query:\n#{gremlin_query}"
+
+          node = Neography::Node.load(Neoid.db.execute_script(gremlin_query, neo_subref_rel_type: neo_subref_rel_type, name: self.name, neo_index_name: self.neo_index_name))
+
           node
         end
       end
 
-      def search(term, options = {})
+      def neo_search(term, options = {})
         Neoid.search(self, term, options)
       end
     end
@@ -42,6 +44,8 @@ module Neoid
       def neo_find_by_id
         Neoid::logger.info "Node#neo_find_by_id #{self.class.neo_index_name} #{self.id}"
         Neoid.db.get_node_index(self.class.neo_index_name, :ar_id, self.id)
+      rescue Neography::NotFoundException
+        nil
       end
       
       def neo_create
@@ -90,13 +94,13 @@ module Neoid
 
         Neoid.db.add_node_to_index(DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, 'ar_type', self.class.name, neo_node.neo_id)
 
-        self.class.neoid_config.search_options.fulltext_fields.each { |field, options|
+        self.class.neoid_config.search_options.fulltext_fields.each do |field, options|
           Neoid.db.add_node_to_index(DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, "#{field}_fulltext", neo_helper_get_field_value(field, options), neo_node.neo_id)
-        }
+        end
 
-        self.class.neoid_config.search_options.index_fields.each { |field, options|
+        self.class.neoid_config.search_options.index_fields.each do |field, options|
           Neoid.db.add_node_to_index(DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, field, neo_helper_get_field_value(field, options), neo_node.neo_id)
-        }
+        end
 
         neo_node
       end
@@ -120,6 +124,7 @@ module Neoid
       def neo_destroy
         return unless neo_node
         Neoid.db.remove_node_from_index(DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, neo_node)
+
         Neoid.db.remove_node_from_index(self.class.neo_index_name, neo_node)
         neo_node.del
         _reset_neo_representation
@@ -147,8 +152,6 @@ module Neoid
       receiver.extend         ClassMethods
       receiver.send :include, InstanceMethods
       Neoid.node_models << receiver
-      
-      receiver.neo_subref_node # ensure
       
       receiver.after_create :neo_create
       receiver.after_update :neo_update

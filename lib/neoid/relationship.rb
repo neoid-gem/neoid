@@ -3,6 +3,8 @@ module Neoid
     module InstanceMethods
       def neo_find_by_id
         Neoid.db.get_relationship_index(self.class.neo_index_name, :ar_id, self.id)
+      rescue Neography::NotFoundException
+        nil
       end
       
       def neo_create
@@ -51,7 +53,7 @@ module Neoid
       end
       
       def neo_update
-        Neoid.db.set_relationship_properties(neo_relationship, self.to_neo)
+        Neoid.db.set_relationship_properties(neo_relationship, self.to_neo) if neo_relationship
       end
 
       def neo_relationship
@@ -88,7 +90,6 @@ module Neoid
         # e.g. User has_many :likes, after_remove: ...
         full_callback_name = "after_remove_for_#{this_has_many.name}"
         belongs_to.klass.send(full_callback_name) << :neo_after_relationship_remove if belongs_to.klass.method_defined?(full_callback_name)
-        # puts " CALLBACK SET #{belongs_to.klass.name} #{belongs_to.name} | #{full_callback_name} << :neo_after_relationship_remove"
         # belongs_to.klass.send(:has_many, this_has_many.name, this_has_many.options.merge(after_remove: :neo_after_relationship_remove))
 
         # has_many (with through) on the side of the relationship that removes a relationship. e.g. User has_many :movies, through :likes
@@ -114,14 +115,12 @@ module Neoid
         # e.g. User has_many :movies, through: :likes, before_remove: ...
         full_callback_name = "before_remove_for_#{many_to_many.name}"
         belongs_to.klass.send(full_callback_name) << :neo_before_relationship_through_remove if belongs_to.klass.method_defined?(full_callback_name)
-        # puts " CALLBACK SET #{belongs_to.klass.name} #{belongs_to.name} | #{full_callback_name} << :neo_before_relationship_through_remove"
         # belongs_to.klass.send(:has_many, many_to_many.name, many_to_many.options.merge(before_remove: :neo_after_relationship_remove))
 
 
         # e.g. User has_many :movies, through: :likes, after_remove: ...
         full_callback_name = "after_remove_for_#{many_to_many.name}"
         belongs_to.klass.send(full_callback_name) << :neo_after_relationship_through_remove if belongs_to.klass.method_defined?(full_callback_name)
-        # puts " CALLBACK SET #{belongs_to.klass.name} #{belongs_to.name} | #{full_callback_name} << :neo_after_relationship_through_remove"
         # belongs_to.klass.send(:has_many, many_to_many.name, many_to_many.options.merge(after_remove: :neo_after_relationship_remove))
       end
     end

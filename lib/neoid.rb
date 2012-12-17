@@ -53,32 +53,30 @@ module Neoid
     end
     
     def reset_cached_variables
-      Neoid.models.each { |klass|
+      Neoid.models.each do |klass|
         klass.instance_variable_set(:@_neo_subref_node, nil)
-      }
+      end
       $neo_ref_node = nil
     end
     
     def clean_db(confirm)
       puts "must call with confirm: Neoid.clean_db(:yes_i_am_sure)" and return unless confirm == :yes_i_am_sure
-      # RestClient.delete "#{Neoid.db.protocol}#{Neoid.db.server}:#{Neoid.db.port}/cleandb/secret-key"
-
       Neoid::NeoDatabaseCleaner.clean_db
     end
     
-    def enabled
-      return true unless @neoid_use_set
-      @neoid_use
-    end
-    
+
     def enabled=(flag)
-      @neoid_use = flag
-      @neoid_use_set = true
+      Thread.current[:neoid_enabled] = flag
     end
-    
+
+    def enabled
+      flag = Thread.current[:neoid_enabled]
+      # flag should be set by the middleware. in case it wasn't (non-rails app or console), default it to true
+      flag.nil? ? true : flag
+    end
     alias enabled? enabled
-    
-    def use(flag = true)
+
+    def use(flag=true)
       old, self.enabled = enabled?, flag
       yield if block_given?
     ensure
@@ -97,7 +95,7 @@ module Neoid
 
       query = []
 
-      types.each { |type|
+      types.each do |type|
         query_for_type = []
 
         query_for_type << "ar_type:#{type.name}"
@@ -108,13 +106,13 @@ module Neoid
           next if search_in_fields.empty?
           query_for_type << search_in_fields.map{ |field| generate_field_query(field, term, true) }.join(" OR ")
         when Hash
-          term.each { |field, value|
+          term.each do |field, value|
             query_for_type << generate_field_query(field, value, false)
-          }
+          end
         end
 
         query << "(#{query_for_type.join(") AND (")})"
-      }
+      end
 
       query = "(#{query.join(") OR (")})"
 
@@ -134,8 +132,6 @@ module Neoid
       logger.info "[NEOID] search:\n#{gremlin_query}"
 
       results = Neoid.db.execute_script(gremlin_query)
-
-      # logger.info "[NEOID] > results: #{results}"
 
       SearchSession.new(results, *types)
     end

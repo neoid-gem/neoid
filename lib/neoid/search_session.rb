@@ -6,9 +6,7 @@ module Neoid
     end
     
     def hits
-      @response.map { |x|
-        Neography::Node.new(x)
-      }
+      @response.map { |x| Neography::Node.new(x) }
     end
 
     def ids
@@ -18,11 +16,11 @@ module Neoid
     def results
       models_by_name = @models.inject({}) { |all, curr| all[curr.name] = curr; all }
 
-      ids_by_klass = @response.inject({}) { |all, curr|
+      ids_by_klass = @response.inject({}) do |all, curr|
         klass_name = curr['data']['ar_type']
         (all[models_by_name[klass_name]] ||= []) << curr['data']['ar_id']
         all
-      }
+      end
 
       ids_by_klass.map { |klass, ids| klass.where(id: ids) }.flatten
     end

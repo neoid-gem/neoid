@@ -7,12 +7,12 @@ describe Neoid::ModelAdditions do
       it "should call neo_create on a neo_node for user" do
         User.any_instance.should_receive(:neo_create)
 
-        User.create(name: "Elad Ossadon")
+        User.create!(name: "Elad Ossadon")
       end
   
       it "should create a neo_node for user" do
-        user = User.create(name: "Elad Ossadon", slug: "elado")
-      
+        user = User.create!(name: "Elad Ossadon", slug: "elado")
+
         user.neo_node.should_not be_nil
         
         user.neo_node.ar_id.should == user.id
@@ -21,7 +21,7 @@ describe Neoid::ModelAdditions do
       end
 
       it "should create a neo_node for movie" do
-        movie = Movie.create(name: "Memento", slug: "memento-1999", year: 1999)
+        movie = Movie.create!(name: "Memento", slug: "memento-1999", year: 1999)
       
         movie.neo_node.should_not be_nil
         
@@ -33,7 +33,7 @@ describe Neoid::ModelAdditions do
   
     context "find by id" do
       it "should find a neo_node for user" do
-        user = User.create(name: "Elad Ossadon", slug: "elado")
+        user = User.create!(name: "Elad Ossadon", slug: "elado")
       
         user.neo_node.should_not be_nil
         user.neo_find_by_id.should_not be_nil

@@ -31,29 +31,30 @@ describe Neoid::ModelAdditions do
         "title:#{r}",
         "year:#{r}",
         "title:#{r} AND year:#{r}"
-      ].each { |q|
+      ].each do |q|
         results = Neoid.db.find_node_index(Neoid::DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, q)
+
         results.should_not be_nil
         results.length.should == 1
         Neoid.db.send(:get_id, results).should == article.neo_node.neo_id
-      }
+      end
     end
     
     context "search session" do
       it "should return a search session" do
-        Article.search("hello").should be_a(Neoid::SearchSession)
+        Article.neo_search("hello").should be_a(Neoid::SearchSession)
       end
       
       it "should find hits" do
         article = Article.create!(title: "Hello world", body: "Lorem ipsum dolor sit amet", year: 2012)
         
-        Article.search("hello").hits.should == [ article.neo_node ]
+        Article.neo_search("hello").hits.should == [ article.neo_node ]
       end
       
       it "should find results with a search string" do
         article = Article.create!(title: "Hello world", body: "Lorem ipsum dolor sit amet", year: 2012)
 
-        Article.search("hello").results.should == [ article ]
+        Article.neo_search("hello").results.should == [ article ]
       end
       
       it "should find results with a hash" do
@@ -63,7 +64,7 @@ describe Neoid::ModelAdditions do
         ]
 
 
-        Article.search(year: 2012).results.should == [ articles[0] ]
+        Article.neo_search(year: 2012).results.should == [ articles[0] ]
       end
     end
 

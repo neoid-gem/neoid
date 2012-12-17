@@ -19,34 +19,26 @@ end
 
 Neoid.db = $neo
 
+ActiveRecord::Base.configurations = YAML::load(IO.read(File.join(File.dirname(__FILE__), 'support/database.yml')))
+ActiveRecord::Base.establish_connection('sqlite3')
+
 RSpec.configure do |config|
   config.mock_with :rspec
-
-  config.before(:all) do
-    dir = File.join(File.dirname(__FILE__), 'support/db')
-    
-    old_db = File.join(dir, 'test.sqlite3')
-    blank_db = File.join(dir, '.blank.sqlite3')
-    
-    if !File.exists?(blank_db)
-      FileUtils.cp(File.join(dir, 'test.sqlite3'), File.join(dir, '.blank.sqlite3'))
-    elsif File.exists?(old_db)
-      FileUtils.rm(old_db)
-      FileUtils.cp(File.join(dir, '.blank.sqlite3'), File.join(dir, 'test.sqlite3'))
-    end
-  end
 
   config.before(:all) do
   end
   
   config.before(:each) do
-    Neoid.models.map(&:destroy_all)
-    # Neoid.clean_db(:yes_i_am_sure) unless ENV['TRAVIS']
     Neoid.reset_cached_variables
+  end
+
+  config.before(:each) do
+    Neoid.clean_db(:yes_i_am_sure)
+    Neoid.models.each(&:destroy_all)
   end
 end
 
-require 'support/connection'
+require 'support/schema'
 require 'support/models'
 
 Neoid.initialize_all

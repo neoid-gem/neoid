@@ -37,6 +37,11 @@ module Neoid
         end
       end
 
+      def neo_resave
+        _reset_neo_representation
+        neo_update
+      end
+
       protected
       def neo_properties_to_hash(*attribute_list)
         attribute_list.flatten.inject({}) { |all, property|
