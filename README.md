@@ -18,37 +18,40 @@ Neoid offers querying Neo4j for IDs of objects and then fetch them from your RDB
 
 Add to your Gemfile and run the `bundle` command to install it.
 
-	gem 'neoid', git: 'git://github.com/elado/neoid.git'
+```ruby
+gem 'neoid', git: 'git://github.com/elado/neoid.git'
+```
 
 **Requires Ruby 1.9.2 or later.**
 
 ## Usage
 
-### First app configuration:
+### Rails app configuration:
 
 In an initializer, such as `config/initializers/01_neo4j.rb`:
 
-	ENV["NEO4J_URL"] ||= "http://localhost:7474"
+```ruby
+ENV["NEO4J_URL"] ||= "http://localhost:7474"
 
-	uri = URI.parse(ENV["NEO4J_URL"])
+uri = URI.parse(ENV["NEO4J_URL"])
 
-    $neo = Neography::Rest.new(uri.to_s)
+$neo = Neography::Rest.new(uri.to_s)
 
-    Neography.configure do |c|
-      c.server = uri.host
-      c.port = uri.port
+Neography.configure do |c|
+  c.server = uri.host
+  c.port = uri.port
 
-      if uri.user && uri.password
-        c.authentication = 'basic'
-        c.username = uri.user
-        c.password = uri.password
-      end
-    end
+  if uri.user && uri.password
+    c.authentication = 'basic'
+    c.username = uri.user
+    c.password = uri.password
+  end
+end
 
-    Neoid.db = $neo
+Neoid.db = $neo
+```
 
-
-`01_` in the file name is in order to get this file loaded first, before the models (files are loaded alphabetically).
+`01_` in the file name is in order to get this file loaded first, before the models (initializers are loaded alphabetically).
 
 If you have a better idea (I bet you do!) please let me know.
 
@@ -60,27 +63,29 @@ If you have a better idea (I bet you do!) please let me know.
 For nodes, first include the `Neoid::Node` module in your model:
 
 
-	class User < ActiveRecord::Base
-      include Neoid::Node
-	end
-
+```ruby
+class User < ActiveRecord::Base
+  include Neoid::Node
+end
+```
 
 This will help to create a corresponding node on Neo4j when a user is created, delete it when a user is destroyed, and update it if needed.
 
 Then, you can customize what fields will be saved on the node in Neo4j, inside neoidable configuration:
 
-
-	class User < ActiveRecord::Base
-      include Neoid::Node
-	  
-	  neoidable do |c|
-	  	c.field :slug
-	  	c.field :display_name
-		c.field :display_name_length do
-		  self.display_name.length
-		end
-	  end
-	end
+```ruby
+class User < ActiveRecord::Base
+  include Neoid::Node
+  
+  neoidable do |c|
+    c.field :slug
+    c.field :display_name
+    c.field :display_name_length do
+      self.display_name.length
+    end
+  end
+end
+```ruby
 
 
 #### Relationships
@@ -88,100 +93,105 @@ Then, you can customize what fields will be saved on the node in Neo4j, inside n
 Let's assume that a `User` can `Like` `Movie`s:
 
 
-	# user.rb
+```ruby
+# user.rb
 
-	class User < ActiveRecord::Base
-      include Neoid::Node
-    
-	  has_many :likes
-      has_many :movies, through: :likes
-    
-	  neoidable do |c|
-	  	c.field :slug
-	  	c.field :display_name
-	  end
-	end
+class User < ActiveRecord::Base
+  include Neoid::Node
 
+  has_many :likes
+  has_many :movies, through: :likes
 
-	# movie.rb
-
-	class Movie < ActiveRecord::Base
-      include Neoid::Node
-    
-	  has_many :likes
-      has_many :users, through: :likes
-    
-	  neoidable do |c|
-	  	c.field :slug
-	  	c.field :name
-	  end
-	end
+  neoidable do |c|
+    c.field :slug
+    c.field :display_name
+  end
+end
 
 
-	# like.rb
+# movie.rb
 
-	class Like < ActiveRecord::Base
-	  belongs_to :user
-      belongs_to :movie
-	end
+class Movie < ActiveRecord::Base
+  include Neoid::Node
 
+  has_many :likes
+  has_many :users, through: :likes
+
+  neoidable do |c|
+    c.field :slug
+    c.field :name
+  end
+end
+
+
+# like.rb
+
+class Like < ActiveRecord::Base
+  belongs_to :user
+  belongs_to :movie
+end
+```
 
 
 Now let's make the `Like` model a Neoid, by including the `Neoid::Relationship` module, and define the relationship (start & end nodes and relationship type) options with `neoidable` config and `relationship` method:
 
 
-	class Like < ActiveRecord::Base
-	  belongs_to :user
-	  belongs_to :movie
+```ruby
+class Like < ActiveRecord::Base
+  belongs_to :user
+  belongs_to :movie
 
-	  include Neoid::Relationship
+  include Neoid::Relationship
 
-	  neoidable do |c|
-	  	c.relationship start_node: :user, end_node: :movie, type: :likes
-	  end
-	end
-
+  neoidable do |c|
+    c.relationship start_node: :user, end_node: :movie, type: :likes
+  end
+end
+```
 
 Neoid adds `neo_node` and `neo_relationships` to nodes and relationships, respectively.
 
 So you could do:
 
-	user = User.create!(display_name: "elado")
-	user.movies << Movie.create("Memento")
-	user.movies << Movie.create("Inception")
+```ruby
+user = User.create!(display_name: "elado")
+user.movies << Movie.create("Memento")
+user.movies << Movie.create("Inception")
 
-	user.neo_node                # => #<Neography::Node…>
-	user.neo_node.display_name   # => "elado"
+user.neo_node                # => #<Neography::Node…>
+user.neo_node.display_name   # => "elado"
 
-	rel = user.likes.first.neo_relationship
-	rel.start_node  # user.neo_node
-	rel.end_node    # user.movies.first.neo_node
-	rel.rel_type    # 'likes'
-
+rel = user.likes.first.neo_relationship
+rel.start_node  # user.neo_node
+rel.end_node    # user.movies.first.neo_node
+rel.rel_type    # 'likes'
+```
 
 ## Index for Full-Text Search
 
 Using `search` block inside a `neoidable` block, you can store certain fields.
 
-	# movie.rb
+```ruby
+# movie.rb
 
-	class Movie < ActiveRecord::Base
-      include Neoid::Node
+class Movie < ActiveRecord::Base
+  include Neoid::Node
 
-	  neoidable do |c|
-	    c.field :slug
-	    c.field :name
+  neoidable do |c|
+    c.field :slug
+    c.field :name
 
-	    c.search do |s|
-	      # full-text index fields
-	      s.fulltext :name
-	      s.fulltext :description
+    c.search do |s|
+      # full-text index fields
+      s.fulltext :name
+      s.fulltext :description
 
-	      # just index for exact matches
-	      s.index :year
-	    end
-	  end
-	end
+      # just index for exact matches
+      s.index :year
+    end
+  end
+end
+```
 
 Records will be automatically indexed when inserted or updated.
 
@@ -198,61 +208,75 @@ Of course, you can store using the `neoidable do |c| c.field ... end` all the da
 
 **Most popular categories**
 
-	gremlin_query = <<-GREMLIN
-	  m = [:]
+```ruby
+gremlin_query = <<-GREMLIN
+  m = [:]
 
-	  g.v(0)
-	    .out('movies_subref').out
-          .inE('likes')
-          .inV
-          .groupCount(m).iterate()
+  g.v(0)
+    .out('movies_subref').out
+      .inE('likes')
+      .inV
+      .groupCount(m).iterate()
 
-	  m.sort{-it.value}.collect{it.key.ar_id}
-	GREMLIN
+  m.sort{-it.value}.collect{it.key.ar_id}
+GREMLIN
 
-	movie_ids = Neoid.db.execute_script(gremlin_query)
+movie_ids = Neoid.db.execute_script(gremlin_query)
 
-	Movie.where(id: movie_ids)
-
+Movie.where(id: movie_ids)
+```
 
 Assuming we have another `Friendship` model which is a relationship with start/end nodes of `user` and type of `friends`,
 
 **Movies of user friends that the user doesn't have**
 
-	user = User.find(1)
+```ruby
+user = User.find(1)
 
-	gremlin_query = <<-GREMLIN
-	  u = g.idx('users_index')[[ar_id:'#{user.id}']].next()
-	  movies = []
+gremlin_query = <<-GREMLIN
+  u = g.idx('users_index')[[ar_id:user_id]].next()
+  movies = []
 
-	  u
-		.out('likes').aggregate(movies).back(2)
-	    .out('friends').out('likes')
-		.dedup
-		.except(movies).collect{it.ar_id}
-	GREMLIN
+  u
+    .out('likes').aggregate(movies).back(2)
+    .out('friends').out('likes')
+    .dedup
+    .except(movies).collect{it.ar_id}
+GREMLIN
 
-	movie_ids = Neoid.db.execute_script(gremlin_query)
+movie_ids = Neoid.db.execute_script(gremlin_query, user_id: user.id)
 
-	Movie.where(id: movie_ids)
-
+Movie.where(id: movie_ids)
+```
 
 `.next()` is in order to get a vertex object which we can actually query on.
 
 
 ### Full Text Search
 
-	# will match all movies with full-text match for name/description. returns ActiveRecord instanced
-	Movie.search("*hello*").results
+```ruby
+# will match all movies with full-text match for name/description. returns ActiveRecord instanced
+Movie.neo_search("*hello*").results
 
-	# same as above but returns hashes with the values that were indexed on Neo4j
-	Movie.search("*hello*").hits
+# same as above but returns hashes with the values that were indexed on Neo4j
+Movie.search("*hello*").hits
 
-	# search in multiple types
-	Neoid.search([Movie, User], "hello")
+# search in multiple types
+Neoid.neo_search([Movie, User], "hello")
 
-	# search with exact matches (pass a hash of field/value)
-	Movie.search(year: 2013).results
+# search with exact matches (pass a hash of field/value)
+Movie.neo_search(year: 2013).results
+```
+
+## Inserting records of existing app
+
+If you have an existing database and just want to integrate Neoid, configure the `neoidable`s and run in a rake task or console
+
+```ruby
+Model.all.each(&:neo_update)
+```
+
+On large datasets use pagination. Better interface for that in the future.
 
 
 ## Behind The Scenes
@@ -298,18 +322,21 @@ Download, install and configure [neo4j-clean-remote-db-addon](https://github.com
 
 In `environments/test.rb`, add:
 
-	ENV["NEO4J_URL"] = 'http://localhost:7574'
+```ruby
+ENV["NEO4J_URL"] = 'http://localhost:7574'
+```
 
 In your `spec_helper.rb`, add the following configurations:
 
-    config.before :all do
-      Neoid.clean_db(:yes_i_am_sure)
-    end
+```ruby
+config.before :all do
+  Neoid.clean_db(:yes_i_am_sure)
+end
 
-    config.before :each do
-      Neoid.reset_cached_variables
-    end
-
+config.before :each do
+  Neoid.reset_cached_variables
+end
+```
 
 ## Testing This Gem
 
