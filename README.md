@@ -273,10 +273,16 @@ Movie.neo_search(year: 2013).results
 If you have an existing database and just want to integrate Neoid, configure the `neoidable`s and run in a rake task or console
 
 ```ruby
-Model.all.each(&:neo_update)
+[ Like.includes(:user).includes(:movie), OtherRelationshipModel ].each { |model| model.all.each(&:neo_update) }
+
+NodeModel.all.each(&:neo_update)
 ```
 
-On large datasets use pagination. Better interface for that in the future.
+This will loop through all of your relationship records and generate the two edge nodes along with a relationship (eager loading for better performance).
+The second line is for nodes without relationships.
+
+For large data sets use pagination.
+Better interface for that in the future.
 
 
 ## Behind The Scenes
