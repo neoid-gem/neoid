@@ -347,6 +347,10 @@ Just run `rake` from the gem folder.
 Please create a [new issue](https://github.com/elado/neoid/issues) if you run into any bugs. Contribute patches via pull requests. Write tests and make sure all tests pass.
 
 
+### Heroku Support
+
+Unfortunately, as for now, Neo4j add-on on Heroku doesn't support Gremlin. Therefore, this gem won't work on Heroku's add on. You should self-host a Neo4j instance on an EC2 or any other server.
+
 
 ## To Do
 
