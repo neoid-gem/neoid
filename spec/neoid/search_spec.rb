@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'fileutils'
 
 describe Neoid::ModelAdditions do
   context "search" do

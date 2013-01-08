@@ -12,6 +12,7 @@ class User < ActiveRecord::Base
   
   def like!(movie)
     movies << movie unless likes?(movie)
+    likes.where(movie_id: movie.id).first
   end
   
   def unlike!(movie)
@@ -52,7 +53,7 @@ end
 class UserFollow < ActiveRecord::Base
   include ActiveModel::Validations::Callbacks
 
-  belongs_to :user, dependent: :destroy
+  belongs_to :user
   belongs_to :item, polymorphic: true
   
   include Neoid::Relationship
@@ -65,8 +66,8 @@ end
 class Like < ActiveRecord::Base
   include ActiveModel::Validations::Callbacks
   
-  belongs_to :user, dependent: :destroy
-  belongs_to :movie, dependent: :destroy
+  belongs_to :user
+  belongs_to :movie
   
   include Neoid::Relationship
   
@@ -93,5 +94,13 @@ class Article < ActiveRecord::Base
       s.index :body
       s.index :year
     end
+  end
+end
+
+class NoAutoIndexNode < ActiveRecord::Base
+  include ActiveModel::Validations::Callbacks
+  include Neoid::Node
+  neoidable auto_index: false do |c|
+    c.field :name
   end
 end

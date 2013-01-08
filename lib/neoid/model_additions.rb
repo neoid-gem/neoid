@@ -2,18 +2,26 @@ module Neoid
   module ModelAdditions
     module ClassMethods
       attr_reader :neoid_config
-      attr_reader :neoid_options
       
       def neoid_config
         @neoid_config ||= Neoid::ModelConfig.new(self)
       end
       
       def neoidable(options = {})
+        # defaults
+        neoid_config.auto_index = true
+        neoid_config.enable_model_index = true # but the Neoid.enable_per_model_indexes is false by default. all models will be true only if the primary option is turned on.
+
         yield(neoid_config) if block_given?
-        @neoid_options = options
+
+        options.each do |key, value|
+          raise "Neoid #{self.name} model options: No such option #{key}" unless neoid_config.respond_to?("#{key}=")
+          neoid_config.send("#{key}=", value)
+        end
       end
-    
-      def neo_index_name
+
+      def neo_model_index_name
+        raise "Per Model index is not enabled. Nodes/Relationships are auto indexed with node_auto_index/relationship_auto_index" unless Neoid.config.enable_per_model_indexes || neoid_config.enable_model_index
         @index_name ||= "#{self.name.tableize}_index"
       end
     end
@@ -37,9 +45,51 @@ module Neoid
         end
       end
 
-      def neo_resave
+      def neo_save_after_model_save
+        return unless self.class.neoid_config.auto_index
+        neo_save
+        true
+      end
+
+      def neo_save
+        @_neo_destroyed = false
+        @_neo_representation = _neo_save
+      end
+
+      alias neo_create neo_save
+      alias neo_update neo_save
+
+      def neo_destroy
+        return if @_neo_destroyed
+        @_neo_destroyed = true
+
+        neo_representation = neo_find_by_id
+        return unless neo_representation
+
+        begin
+          neo_representation.del
+        rescue Neography::NodeNotFoundException => e
+          Neoid::logger.info "Neoid#neo_destroy entity not found #{self.class.name} #{self.id}"
+        end
+
+        # Not working yet because Neography can't delete a node and all of its realtionships in a batch, and deleting a node with relationships results an error
+        # if Neoid::Batch.current_batch
+        #   Neoid::Batch.current_batch << [self.class.delete_command, neo_representation.neo_id]
+        # else
+        #   begin
+        #     neo_representation.del
+        #   rescue Neography::NodeNotFoundException => e
+        #     Neoid::logger.info "Neoid#neo_destroy entity not found #{self.class.name} #{self.id}"
+        #   end
+        # end
+
         _reset_neo_representation
-        neo_update
+
+        true
+      end
+
+      def neo_unique_id
+        "#{self.class.name}:#{self.id}"
       end
 
       protected
@@ -52,14 +102,7 @@ module Neoid
 
       private
       def _neo_representation
-        @_neo_representation ||= begin
-          results = neo_find_by_id
-          if results
-            neo_load(results.first['self'])
-          else
-            neo_create
-          end
-        end
+        @_neo_representation ||= neo_find_by_id || neo_save
       end
 
       def _reset_neo_representation
@@ -70,7 +113,9 @@ module Neoid
     def self.included(receiver)
       receiver.extend         ClassMethods
       receiver.send :include, InstanceMethods
-      Neoid.models << receiver
+
+      receiver.after_save :neo_save_after_model_save
+      receiver.after_destroy :neo_destroy
     end
   end
 end

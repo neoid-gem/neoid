@@ -1,24 +1,27 @@
+require 'neography'
 require 'neoid/version'
+require 'neoid/config'
 require 'neoid/model_config'
 require 'neoid/model_additions'
 require 'neoid/search_session'
 require 'neoid/node'
 require 'neoid/relationship'
+require 'neoid/batch'
 require 'neoid/database_cleaner'
 require 'neoid/railtie' if defined?(Rails)
 
 module Neoid
-  DEFAULT_FULLTEXT_SEARCH_INDEX_NAME = 'neoid_default_search_index'
+  DEFAULT_FULLTEXT_SEARCH_INDEX_NAME = :neoid_default_search_index
+  NODE_AUTO_INDEX_NAME = 'node_auto_index'
+  RELATIONSHIP_AUTO_INDEX_NAME = 'relationship_auto_index'
+  UNIQUE_ID_KEY = 'neoid_unique_id'
 
   class << self
     attr_accessor :db
     attr_accessor :logger
     attr_accessor :ref_node
     attr_accessor :env_loaded
-    
-    def models
-      @models ||= []
-    end
+    attr_reader :config
     
     def node_models
       @node_models ||= []
@@ -29,19 +32,41 @@ module Neoid
     end
 
     def config
-      @config ||= {}
+      @config ||= begin
+        c = Neoid::Config.new
+
+        # default
+        c.enable_subrefs = true
+        c.enable_per_model_indexes = false
+
+        c
+      end
+    end
+
+    def configure
+      yield config
     end
 
     def initialize_all
       @env_loaded = true
-      relationship_models.each do |rel_model|
-        Relationship.initialize_relationship(rel_model)
-      end
+      logger.info "Neoid initialize_all"
+      initialize_relationships
+      initialize_server
+    end
+
+    def initialize_server
+      initialize_auto_index
+      initialize_subrefs
+      initialize_per_model_indexes
     end
     
     def db
       raise "Must set Neoid.db with a Neography::Rest instance" unless @db
       @db
+    end
+
+    def batch(options={}, &block)
+      Neoid::Batch.new(options, &block).run
     end
     
     def logger
@@ -53,10 +78,7 @@ module Neoid
     end
     
     def reset_cached_variables
-      Neoid.models.each do |klass|
-        klass.instance_variable_set(:@_neo_subref_node, nil)
-      end
-      $neo_ref_node = nil
+      initialize_subrefs
     end
     
     def clean_db(confirm)
@@ -81,6 +103,19 @@ module Neoid
       yield if block_given?
     ensure
       self.enabled = old
+    end
+
+    def execute_script_or_add_to_batch(gremlin_query, script_vars)
+      if Neoid::Batch.current_batch
+        # returns a SingleResultPromiseProxy!
+        Neoid::Batch.current_batch << [:execute_script, gremlin_query, script_vars]
+      else
+        value = Neoid.db.execute_script(gremlin_query, script_vars)
+
+        value = yield(value) if block_given?
+
+        Neoid::BatchPromiseProxy.new(value)
+      end
     end
 
     # create a fulltext index if not exists
@@ -154,6 +189,48 @@ module Neoid
         fulltext = fulltext ? "_fulltext" : nil
 
         "(" + term.split(/\s+/).reject(&:empty?).map{ |t| "#{field}#{fulltext}:#{sanitize_term(t)}" }.join(" AND ") + ")"
+      end
+
+      def initialize_relationships
+        logger.info "Neoid initialize_relationships"
+        relationship_models.each do |rel_model|
+          Relationship.initialize_relationship(rel_model)
+        end
+      end
+
+      def initialize_auto_index
+        logger.info "Neoid initialize_auto_index"
+        Neoid.db.set_node_auto_index_status(true)
+        Neoid.db.add_node_auto_index_property(UNIQUE_ID_KEY)
+
+        Neoid.db.set_relationship_auto_index_status(true)
+        Neoid.db.add_relationship_auto_index_property(UNIQUE_ID_KEY)
+      end
+
+      def initialize_subrefs
+        return unless config.enable_subrefs
+        
+        node_models.each do |klass|
+          klass.reset_neo_subref_node
+        end
+
+        logger.info "Neoid initialize_subrefs"
+        batch do
+          node_models.each(&:neo_subref_node)
+        end.then do |results|
+          node_models.zip(results).each do |klass, subref|
+            klass.neo_subref_node = subref
+          end
+        end
+      end
+
+      def initialize_per_model_indexes
+        return unless config.enable_per_model_indexes
+
+        logger.info "Neoid initialize_subrefs"
+        batch do
+          node_models.each(&:neo_model_index)
+        end
       end
   end
 end

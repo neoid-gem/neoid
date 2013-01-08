@@ -37,4 +37,8 @@ ActiveRecord::Schema.define :version => 0 do
 
     t.timestamps
   end
+
+  create_table :no_auto_index_nodes do |t|
+    t.string :name
+  end
 end

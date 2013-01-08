@@ -3,6 +3,8 @@ module Neoid
     attr_reader :properties
     attr_reader :search_options
     attr_reader :relationship_options
+    attr_accessor :enable_model_index
+    attr_accessor :auto_index
     
     def initialize(klass)
       @klass = klass

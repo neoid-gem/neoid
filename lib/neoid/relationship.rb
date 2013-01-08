@@ -1,59 +1,100 @@
 module Neoid
   module Relationship
+    # this is a proxy that delays loading of start_node and end_node from Neo4j until accessed.
+    # the original Neography Relatioship loaded them on initialization
+    class RelationshipLazyProxy < ::Neography::Relationship
+      def start_node
+        @start_node_from_db ||= @start_node = Neography::Node.load(@start_node, Neoid.db)
+      end
+
+      def end_node
+        @end_node_from_db ||= @end_node = Neography::Node.load(@end_node, Neoid.db)
+      end
+    end
+
+    def self.from_hash(hash)
+      relationship = RelationshipLazyProxy.new(hash)
+
+      relationship
+    end
+
+
+    module ClassMethods
+      def delete_command
+        :delete_relationship
+      end
+    end
+
     module InstanceMethods
       def neo_find_by_id
-        Neoid.db.get_relationship_index(self.class.neo_index_name, :ar_id, self.id)
-      rescue Neography::NotFoundException
-        nil
-      end
-      
-      def neo_create
-        return unless Neoid.enabled?
-        @_neo_destroyed = false
-        
-        options = self.class.neoid_config.relationship_options
-        
-        start_node = self.send(options[:start_node])
-        end_node = self.send(options[:end_node])
-        
-        return unless start_node && end_node
-
-        data = self.to_neo.merge(ar_type: self.class.name, ar_id: self.id)
-        data.reject! { |k, v| v.nil? }
-        
-        relationship = Neography::Relationship.create(
-          options[:type].is_a?(Proc) ? options[:type].call(self) : options[:type],
-          start_node.neo_node,
-          end_node.neo_node,
-          data
-        )
-        
-        Neoid.db.add_relationship_to_index(self.class.neo_index_name, :ar_id, self.id, relationship)
-
-        Neoid::logger.info "Relationship#neo_create #{self.class.name} #{self.id}, index = #{self.class.neo_index_name}"
-        
+        results = Neoid.db.get_relationship_auto_index(Neoid::UNIQUE_ID_KEY, self.neo_unique_id)
+        relationship = results.present? ? Neoid::Relationship.from_hash(results[0]) : nil
         relationship
       end
       
-      def neo_load(relationship)
-        Neography::Relationship.load(relationship)
+      def _neo_save
+        return unless Neoid.enabled?
+        
+        options = self.class.neoid_config.relationship_options
+        
+        start_item = self.send(options[:start_node])
+        end_item = self.send(options[:end_node])
+        
+        return unless start_item && end_item
+
+        # initialize nodes
+        start_item.neo_node
+        end_item.neo_node
+
+        data = self.to_neo.merge(ar_type: self.class.name, ar_id: self.id, Neoid::UNIQUE_ID_KEY => self.neo_unique_id)
+        data.reject! { |k, v| v.nil? }
+
+        rel_type = options[:type].is_a?(Proc) ? options[:type].call(self) : options[:type]
+
+        gremlin_query = <<-GREMLIN
+          idx = g.idx('relationship_auto_index');
+          q = null;
+          if (idx) q = idx.get(unique_id_key, unique_id);
+
+          relationship = null;
+          if (q && q.hasNext()) {
+            relationship = q.next();
+            relationship_data.each {
+              if (relationship.getProperty(it.key) != it.value) {
+                relationship.setProperty(it.key, it.value);
+              }
+            }
+          } else {
+            node_index = g.idx('node_auto_index');
+            start_node = node_index.get(unique_id_key, start_node_unique_id).next();
+            end_node = node_index.get(unique_id_key, end_node_unique_id).next();
+
+            relationship = g.addEdge(start_node, end_node, rel_type, relationship_data);
+          }
+
+          relationship
+        GREMLIN
+
+         script_vars = {
+          unique_id_key: Neoid::UNIQUE_ID_KEY,
+          relationship_data: data,
+          unique_id: self.neo_unique_id,
+          start_node_unique_id: start_item.neo_unique_id,
+          end_node_unique_id: end_item.neo_unique_id,
+          rel_type: rel_type
+        }
+
+        Neoid::logger.info "Relationship#neo_save #{self.class.name} #{self.id}"
+        
+        relationship = Neoid.execute_script_or_add_to_batch gremlin_query, script_vars do |value|
+          Neoid::Relationship.from_hash(value)
+        end
+
+        relationship
       end
       
-      def neo_destroy
-        return if @_neo_destroyed
-        @_neo_destroyed = true
-        return unless neo_relationship
-        Neoid.db.remove_relationship_from_index(self.class.neo_index_name, neo_relationship)
-        neo_relationship.del
-        _reset_neo_representation
-
-        Neoid::logger.info "Relationship#neo_destroy #{self.class.name} #{self.id}, index = #{self.class.neo_index_name}"
-
-        true
-      end
-      
-      def neo_update
-        Neoid.db.set_relationship_properties(neo_relationship, self.to_neo) if neo_relationship
+      def neo_load(hash)
+        Neoid::Relationship.from_hash(hash)
       end
 
       def neo_relationship
@@ -64,16 +105,15 @@ module Neoid
     def self.included(receiver)
       receiver.send :include, Neoid::ModelAdditions
       receiver.send :include, InstanceMethods
+      receiver.extend         ClassMethods
       
-      receiver.after_create :neo_create
-      receiver.after_destroy :neo_destroy
-      receiver.after_update :neo_update
+      initialize_relationship receiver if Neoid.env_loaded
 
-      if Neoid.env_loaded
-        initialize_relationship receiver
-      else
-        Neoid.relationship_models << receiver
-      end
+      Neoid.relationship_models << receiver
+    end
+
+    def self.meta_data
+      @meta_data ||= {}
     end
 
     def self.initialize_relationship(rel_model)
@@ -90,7 +130,6 @@ module Neoid
         # e.g. User has_many :likes, after_remove: ...
         full_callback_name = "after_remove_for_#{this_has_many.name}"
         belongs_to.klass.send(full_callback_name) << :neo_after_relationship_remove if belongs_to.klass.method_defined?(full_callback_name)
-        # belongs_to.klass.send(:has_many, this_has_many.name, this_has_many.options.merge(after_remove: :neo_after_relationship_remove))
 
         # has_many (with through) on the side of the relationship that removes a relationship. e.g. User has_many :movies, through :likes
         many_to_many = all_has_many.find { |o| o.options[:through] == this_has_many.name }
@@ -104,24 +143,20 @@ module Neoid
         # movie_id
         foreign_key_of_record = many_to_many.source_reflection.foreign_key
 
-        (Neoid.config[:relationship_meta_data] ||= {}).tap do |data|
+        (Neoid::Relationship.meta_data ||= {}).tap do |data|
           (data[belongs_to.klass.name.to_s] ||= {}).tap do |model_data|
             model_data[many_to_many.klass.name.to_s] = [rel_model.name.to_s, foreign_key_of_owner, foreign_key_of_record]
           end
         end
 
-        # puts Neoid.config[:relationship_meta_data].inspect
-
         # e.g. User has_many :movies, through: :likes, before_remove: ...
         full_callback_name = "before_remove_for_#{many_to_many.name}"
         belongs_to.klass.send(full_callback_name) << :neo_before_relationship_through_remove if belongs_to.klass.method_defined?(full_callback_name)
-        # belongs_to.klass.send(:has_many, many_to_many.name, many_to_many.options.merge(before_remove: :neo_after_relationship_remove))
 
 
         # e.g. User has_many :movies, through: :likes, after_remove: ...
         full_callback_name = "after_remove_for_#{many_to_many.name}"
         belongs_to.klass.send(full_callback_name) << :neo_after_relationship_through_remove if belongs_to.klass.method_defined?(full_callback_name)
-        # belongs_to.klass.send(:has_many, many_to_many.name, many_to_many.options.merge(after_remove: :neo_after_relationship_remove))
       end
     end
   end
