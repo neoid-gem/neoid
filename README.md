@@ -15,7 +15,7 @@ Neoid offers querying Neo4j for IDs of objects and then fetch them from your RDB
 
 ## Changelog
 
-[See Changelog](https://github.com/elado/neoid/blob/master/CHANGELOG.md)
+[See Changelog](https://github.com/elado/neoid/blob/master/CHANGELOG.md). Including some breaking changes (and solutions) from previos versions.
 
 
 ## Installation
