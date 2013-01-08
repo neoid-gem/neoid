@@ -119,7 +119,7 @@ module Neoid
   # so a `.then` can be chained after the batch do ... end
   # it proxies all methods to the result
   class BatchPromiseProxy
-    def initialize(*results)
+    def initialize(results)
       @results = results
     end
 
@@ -128,7 +128,7 @@ module Neoid
     end
 
     def then
-      yield(*@results)
+      yield(@results)
     end
   end
 

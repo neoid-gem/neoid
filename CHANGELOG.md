@@ -1,4 +1,4 @@
-## v0.1
+## v0.1.1
 
 * Added batch support, for much faster intiialization of current DB or reindexing all DB.
 * Dropped indexes per model, instead, using `node_auto_index` and `relationship_auto_index`, letting Neo4j auto index objects.
