@@ -23,7 +23,7 @@ Neoid offers querying Neo4j for IDs of objects and then fetch them from your RDB
 Add to your Gemfile and run the `bundle` command to install it.
 
 ```ruby
-gem 'neoid', '~> 0.1'
+gem 'neoid', '~> 0.1.1'
 ```
 
 **Requires Ruby 1.9.2 or later.**
