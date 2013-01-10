@@ -106,7 +106,7 @@ module Neoid
             }
           } else {
             node = g.addVertex(node_data);
-            if (enable_subrefs) g.addEdge(g.v(subref_id), node, neo_subref_rel_type);
+            if (enable_subrefs) g.addEdge(g.v(subref_id), node, neo_subref_node_rel_type);
 
             if (enable_model_index) g.idx(neo_model_index_name).put('ar_id', node.ar_id, node);
           }
@@ -125,7 +125,7 @@ module Neoid
         if Neoid.config.enable_subrefs
           script_vars.update(
             subref_id: self.class.neo_subref_node.neo_id,
-            neo_subref_rel_type: self.class.neo_subref_rel_type
+            neo_subref_node_rel_type: self.class.neo_subref_node_rel_type
           )
         end
 

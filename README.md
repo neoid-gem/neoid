@@ -217,7 +217,7 @@ Neoid::Node.from_hash(Neoid.db.get_node_auto_index(Neoid::UNIQUE_ID_KEY, user.ne
 If Subreferences are enabled, you can get the subref node and then get all attached nodes:
 
 ```ruby
-Neoid.ref_node.outgoing('users_subref').first.outgoing('users_subref').to_a
+Neoid.ref_node.outgoing('users_subref').first.outgoing('users').to_a
 # => this, according to Neography, returns an array of Neography::Node so no conversion is needed
 ```
 
