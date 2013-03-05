@@ -459,7 +459,7 @@ Unfortunately, as for now, Neo4j add-on on Heroku doesn't support Gremlin. There
 
 ## TO DO
 
-[TO DO](HTTPS://GITHUB.COM/ELADO/NEOID/BLOB/MASTER/TODO.MD)
+[TO DO](https://github.com/elado/neoid/blob/master/TODO.md)
 
 
 ---
