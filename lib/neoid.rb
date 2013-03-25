@@ -139,7 +139,7 @@ module Neoid
         when String
           search_in_fields = type.neoid_config.search_options.fulltext_fields.keys
           next if search_in_fields.empty?
-          query_for_type << search_in_fields.map{ |field| generate_field_query(field, term, true) }.join(" OR ")
+          query_for_type << search_in_fields.map{ |field| generate_field_query(field, term, true, options[:match_type]) }.join(" OR ")
         when Hash
           term.each do |field, value|
             query_for_type << generate_field_query(field, value, false)
@@ -182,13 +182,17 @@ module Neoid
         query.gsub("'", "\\\\'")
       end
 
-      def generate_field_query(field, term, fulltext = false)
+      def generate_field_query(field, term, fulltext = false, match_type = "AND")
         term = term.to_s if term
         return "" if term.nil? || term.empty?
 
         fulltext = fulltext ? "_fulltext" : nil
-
-        "(" + term.split(/\s+/).reject(&:empty?).map{ |t| "#{field}#{fulltext}:#{sanitize_term(t)}" }.join(" AND ") + ")"
+        case match_type
+        when "OR"
+          "(" + term.split(/\s+/).reject(&:empty?).map{ |t| "#{field}#{fulltext}:#{sanitize_term(t)}" }.join(" OR ") + ")"
+        else
+          "(" + term.split(/\s+/).reject(&:empty?).map{ |t| "#{field}#{fulltext}:#{sanitize_term(t)}" }.join(" AND ") + ")"
+        end
       end
 
       def initialize_relationships
