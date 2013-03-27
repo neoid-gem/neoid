@@ -124,7 +124,7 @@ module Neoid
     end
 
     def search(types, term, options = {})
-      options = options.reverse_merge(limit: 15)
+      options = options.reverse_merge(limit: 15,match_type: "AND")
 
       types = [*types]
 
@@ -187,12 +187,11 @@ module Neoid
         return "" if term.nil? || term.empty?
 
         fulltext = fulltext ? "_fulltext" : nil
-        case match_type
-        when "OR"
-          "(" + term.split(/\s+/).reject(&:empty?).map{ |t| "#{field}#{fulltext}:#{sanitize_term(t)}" }.join(" OR ") + ")"
-        else
-          "(" + term.split(/\s+/).reject(&:empty?).map{ |t| "#{field}#{fulltext}:#{sanitize_term(t)}" }.join(" AND ") + ")"
-        end
+        valid_match_types = %w( AND OR )
+        match_type = valid_match_types.delete(match_type)
+        raise "Invalid match_type option. Valid values are #{valid_match_types.join(',')}" unless match_type
+
+        "(" + term.split(/\s+/).reject(&:empty?).map{ |t| "#{field}#{fulltext}:#{sanitize_term(t)}" }.join(" #{match_type} ") + ")"
       end
 
       def initialize_relationships
