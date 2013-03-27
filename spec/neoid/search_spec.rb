@@ -98,13 +98,13 @@ describe Neoid::ModelAdditions do
         ]
       end
 
-      it "should search return only matches with AND" do
+      it "should return search results only matches with AND" do
         Neoid.search([Article],"manga comics").results.size.should eq(1)
 
         Neoid.search([Article],"manga comics",{match_type: "AND"}).results.size.should eq(1)
       end
 
-      it "should search return all results with OR" do
+      it "should return search results all results with OR" do
         Neoid.search([Article],"manga comics",{match_type: "OR"}).results.size.should eq(4)
       end
 
