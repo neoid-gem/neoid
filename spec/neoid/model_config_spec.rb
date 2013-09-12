@@ -15,9 +15,14 @@ describe Neoid::ModelConfig do
       Article.neoid_config.stored_fields[:title_length].should be_a(Proc)
     end
 
+    it "should store stored json fields" do
+      NodeWithJson.neoid_config.stored_json_fields.should_not be_nil
+      NodeWithJson.neoid_config.stored_json_fields.should include(:data)
+    end
+
     it "should store stored fields based on blocks" do
       article = Article.create! title: "Hello", year: 2012
-      
+
       article.neo_node.title_length.should == article.title.length
     end
   end
