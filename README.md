@@ -2,6 +2,13 @@
 
 [![Build Status](https://secure.travis-ci.org/elado/neoid.png)](http://travis-ci.org/elado/neoid)
 
+## This fork only
+
+This fork was made so that neoid supports a JSON type field in the database.
+This 's based on PostgreSQL 9.2 and Rails 4.0
+
+# Reame
+
 
 Make your ActiveRecords stored and searchable on Neo4j graph database, in order to make fast graph queries that MySQL would crawl while doing them.
 
@@ -85,7 +92,7 @@ Then, you can customize what fields will be saved on the node in Neo4j, inside `
 ```ruby
 class User < ActiveRecord::Base
   include Neoid::Node
-  
+
   neoidable do |c|
     c.field :slug
     c.field :display_name
@@ -182,7 +189,7 @@ If you'd like to save nodes manually rather than after_save, use `auto_index: fa
 ```ruby
 class User < ActiveRecord::Base
   include Neoid::Node
-  
+
   neoidable auto_index: false do |c|
   end
 end
