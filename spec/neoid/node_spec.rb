@@ -29,14 +29,13 @@ describe Neoid::Node do
     end
 
     it "should create a neo_node for node with json field" do
-      value1 = "We understand how dangerous a mask can be. We all become what we pretend to be."
-      value2 = (1..100).to_a.sample
-      node = NodeWithJson.create!(data: {key1: value1, key2: value2})
+      node = NodeWithJson.create!(data: {key1: "value1", key2: 2}, node_type: "value 3")
 
       node.neo_node.should_not be_nil
       node.neo_node.ar_id.should == node.id
-      node.neo_node.key1.should == value1
-      node.neo_node.key2.should == value2
+      node.neo_node.node_type.should == "value 3"
+      node.neo_node.key1.should == "value1"
+      node.neo_node.key2.should == 2
     end
   end
 
