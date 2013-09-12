@@ -48,5 +48,6 @@ ActiveRecord::Schema.define :version => 0 do
 
   create_table :node_with_jsons do |t|
     t.json :data
+    t.string :node_type
   end
 end

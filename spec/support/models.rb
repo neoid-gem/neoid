@@ -110,6 +110,7 @@ class NodeWithJson < ActiveRecord::Base
   include Neoid::Node
 
   neoidable do |c|
-    c.field :data
+    c.json_field :data
+    c.field :node_type
   end
 end
