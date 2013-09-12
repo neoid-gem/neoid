@@ -5,7 +5,10 @@
 ## This fork only
 
 This fork was made so that neoid supports a JSON type field in the database.
-This 's based on PostgreSQL 9.2 and Rails 4.0
+This 's based on PostgreSQL 9.2 and Rails 4.0.
+
+You need to have a PostgreSQL db availale (as PG can't be run in memory like SQLite3).
+Currently, I'm manually dropping/creating the db everytime I run the test, which is time-consuming.
 
 # Reame
 

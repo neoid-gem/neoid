@@ -1,7 +1,9 @@
 require 'neoid'
+require 'pg'
 require 'active_record'
 require 'neography'
 require 'rest-client'
+require 'pg'
 
 # ENV['NEOID_LOG'] = 'true'
 
@@ -21,9 +23,19 @@ end
 
 Neoid.db = $neo
 
+# establish a connection to sqlite3 (in memory)
+# logger, ActiveRecord::Base.logger = ActiveRecord::Base.logger, Logger.new('/dev/null')
+# ActiveRecord::Base.configurations = YAML::load(IO.read(File.join(File.dirname(__FILE__), 'support/database.yml')))
+# ActiveRecord::Base.establish_connection('sqlite3')
+
+# establish connection to a PostgreSQL db (persistent)
 logger, ActiveRecord::Base.logger = ActiveRecord::Base.logger, Logger.new('/dev/null')
-ActiveRecord::Base.configurations = YAML::load(IO.read(File.join(File.dirname(__FILE__), 'support/database.yml')))
-ActiveRecord::Base.establish_connection('sqlite3')
+adapter = 'postgresql'
+db_config = YAML.load(IO.read(File.join(File.dirname(__FILE__), 'support/database.yml')))[adapter]
+ActiveRecord::Base.establish_connection(db_config)
+# config = ActiveRecord::Base.connection.pool.spec.config
+
+
 
 require 'support/schema'
 require 'support/models'
@@ -35,7 +47,7 @@ RSpec.configure do |config|
 
   config.before(:all) do
   end
-  
+
   config.before(:each) do
     Neoid.node_models.each(&:destroy_all)
     Neoid.clean_db(:yes_i_am_sure)
