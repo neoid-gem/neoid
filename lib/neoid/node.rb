@@ -77,14 +77,14 @@ module Neoid
         Neoid.search(self, term, options)
       end
     end
-    
+
     module InstanceMethods
       def neo_find_by_id
         # Neoid::logger.info "Node#neo_find_by_id #{self.class.neo_index_name} #{self.id}"
         node = Neoid.db.get_node_auto_index(Neoid::UNIQUE_ID_KEY, self.neo_unique_id)
         node.present? ? Neoid::Node.from_hash(node[0]) : nil
       end
-      
+
       def _neo_save
         return unless Neoid.enabled?
 
@@ -174,11 +174,11 @@ module Neoid
           self.send(field) rescue (raise "No field #{field} for #{self.class.name}")
         end
       end
-      
+
       def neo_load(hash)
         Neoid::Node.from_hash(hash)
       end
-      
+
       def neo_node
         _neo_representation
       end
@@ -199,7 +199,7 @@ module Neoid
         @__neo_temp_rels.delete(record)
       end
     end
-      
+
     def self.included(receiver)
       receiver.send :include, Neoid::ModelAdditions
       receiver.extend         ClassMethods
