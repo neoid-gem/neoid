@@ -413,7 +413,8 @@ In order to test your app or this gem, you need a running Neo4j database, dedica
 
 I use port 7574 for testing.
 
-To run another database locally (read [here](http://docs.neo4j.org/chunked/1.9.M03/server-installation.html#_multiple_server_instances_on_one_machine) too):
+To run another database locally (read
+[here](http://docs.neo4j.org/chunked/stable/ha-setup-tutorial.html#ha-local-cluster) too):
 
 Copy the entire Neo4j database folder to a different location,
 
