@@ -19,7 +19,7 @@ Neography.configure do |c|
   end
 end
 
-Neoid.db = $neo
+Neoid.add_connection(:main, $neo)
 
 logger, ActiveRecord::Base.logger = ActiveRecord::Base.logger, Logger.new('/dev/null')
 ActiveRecord::Base.configurations = YAML::load(IO.read(File.join(File.dirname(__FILE__), 'support/database.yml')))
@@ -37,9 +37,11 @@ RSpec.configure do |config|
   end
   
   config.before(:each) do
-    Neoid.node_models.each(&:destroy_all)
-    Neoid.clean_db(:yes_i_am_sure)
-    Neoid.reset_cached_variables
+    Neoid.connections.each do |name, conn|
+      conn.node_models.each(&:destroy_all)
+      conn.clean_db(:yes_i_am_sure)
+      conn.reset_cached_variables
+    end
   end
 end
 
