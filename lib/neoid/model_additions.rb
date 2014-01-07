@@ -72,7 +72,7 @@ module Neoid
 
         begin
           neo_representation.del
-        rescue Neography::NodeNotFoundException => e
+        rescue Neography::NodeNotFoundException
           Neoid::logger.info "Neoid#neo_destroy entity not found #{self.class.name} #{self.id}"
         end
 

@@ -1,5 +1,6 @@
 class User < ActiveRecord::Base
   include ActiveModel::Validations::Callbacks
+
   
   has_many :likes
   has_many :movies, through: :likes

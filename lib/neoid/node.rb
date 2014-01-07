@@ -22,16 +22,17 @@ module Neoid
       end
 
       def neo4j_connection
-        @neorj_connection ||= begin
-          instance = Neoid::Connections.connection(@neo4j_connection_name)
+        @neo4j_connection ||= begin
+          instance = Neoid.connection(@neo4j_connection_name)
           instance.node_models << self
+          instance
         end
       end
 
       def neo_model_index
         return nil unless self.neo4j_connection.config.enable_per_model_indexes
 
-        Neoid::logger.info "Node#neo_model_index #{neo_subref_rel_type}"
+        self.neo4j_connection.logger.info "Node#neo_model_index #{neo_subref_rel_type}"
 
         gremlin_query = <<-GREMLIN
           g.createManualIndex(neo_model_index_name, Vertex.class);
@@ -48,7 +49,7 @@ module Neoid
         return nil unless self.neo4j_connection.config.enable_subrefs
 
         @neo_subref_node ||= begin
-          Neoid::logger.info "Node#neo_subref_node #{neo_subref_rel_type}"
+          self.neo4j_connection.logger.info "Node#neo_subref_node #{neo_subref_rel_type}"
 
           gremlin_query = <<-GREMLIN
             q = g.v(0).out(neo_subref_rel_type);
@@ -87,7 +88,7 @@ module Neoid
     
     module InstanceMethods
       def neo_find_by_id
-        # Neoid::logger.info "Node#neo_find_by_id #{self.class.neo_index_name} #{self.id}"
+        # self.neo4j_connection.logger.info "Node#neo_find_by_id #{self.class.neo_index_name} #{self.id}"
         node = self.class.neo4j_connection.db.get_node_auto_index(Neoid::UNIQUE_ID_KEY, self.neo_unique_id)
         node.present? ? Neoid::Node.from_hash(node[0]) : nil
       end
@@ -142,7 +143,7 @@ module Neoid
           )
         end
 
-        Neoid::logger.info "Node#neo_save #{self.class.name} #{self.id}"
+        self.neo4j_connection.logger.info "Node#neo_save #{self.class.name} #{self.id}"
 
         node = self.class.neo4j_connection.execute_script_or_add_to_batch(gremlin_query, script_vars) do |value|
           @_neo_representation = Neoid::Node.from_hash(value)
@@ -202,7 +203,7 @@ module Neoid
       end
 
       def neo_after_relationship_through_remove(record)
-        @__neo_temp_rels.each { |record, relationship| relationship.neo_destroy }
+        @__neo_temp_rels.each { |r, relationship| relationship.neo_destroy }
         @__neo_temp_rels.delete(record)
       end
     end

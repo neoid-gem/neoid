@@ -31,9 +31,10 @@ module Neoid
 
       def neo4j_connection
         @neorj_connection ||= begin
-          instance = Neoid::Connections.connection(@neo4j_connection_name)
+          instance = Neoid.connection(@neo4j_connection_name)
           initialize_relationship receiver if instance.env_loaded
           instance.relationship_models << self
+          instance
         end
       end
     end

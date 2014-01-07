@@ -4,7 +4,7 @@ module Neoid
   class Railtie < Rails::Railtie
     initializer "neoid.configure_rails_initialization" do
       config.after_initialize do
-        Neoid::Connections.initialize_all
+        Neoid.initialize_all
       end
     end
 

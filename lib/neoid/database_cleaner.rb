@@ -1,12 +1,10 @@
 module Neoid
   class NeoDatabaseCleaner
     def self.clean_db(instance, start_node = nil)
-      puts instance.inspect
-      start_node ||= instance.db.get_root
-      instance.db.execute_script <<-GREMLIN
-        g.V.toList().each { if (it.id != 0) g.removeVertex(it) }
-        g.indices.each { g.dropIndex(it.indexName); }
-      GREMLIN
+      #start_node ||= instance.db.get_root
+      instance.db.execute_query <<-CYPHER
+        START n0=node(0),nx=node(*) OPTIONAL MATCH n0-[r0]-(),nx-[rx]-() WHERE nx <> n0 DELETE r0,rx,nx
+      CYPHER
 
       true
     end

@@ -29,7 +29,7 @@ module Neoid
       if !name || name == :default
         name = default_connection_name
         if !name && connections.size == 1
-          return connections.first
+          return connections.values.first
         end
       end
 
