@@ -1,8 +1,8 @@
 module Neoid
   module Node
-    def self.from_hash(hash)
+    def self.from_hash(hash, connection)
       node = Neography::Node.new(hash)
-      node.neo_server = self.neo4j_connection.db
+      node.neo_server = connection.db
       node
     end
 
@@ -72,7 +72,7 @@ module Neoid
           }
 
           self.neo4j_connection.execute_script_or_add_to_batch gremlin_query, script_vars do |value|
-            Neoid::Node.from_hash(value)
+            Neoid::Node.from_hash(value, self.neo4j_connection)
           end
         end
       end
@@ -90,7 +90,7 @@ module Neoid
       def neo_find_by_id
         # self.neo4j_connection.logger.info "Node#neo_find_by_id #{self.class.neo_index_name} #{self.id}"
         node = self.class.neo4j_connection.db.get_node_auto_index(Neoid::UNIQUE_ID_KEY, self.neo_unique_id)
-        node.present? ? Neoid::Node.from_hash(node[0]) : nil
+        node.present? ? Neoid::Node.from_hash(node[0], self.class.neo4j_connection) : nil
       end
       
       def _neo_save
@@ -143,10 +143,10 @@ module Neoid
           )
         end
 
-        self.neo4j_connection.logger.info "Node#neo_save #{self.class.name} #{self.id}"
+        self.class.neo4j_connection.logger.info "Node#neo_save #{self.class.name} #{self.id}"
 
         node = self.class.neo4j_connection.execute_script_or_add_to_batch(gremlin_query, script_vars) do |value|
-          @_neo_representation = Neoid::Node.from_hash(value)
+          @_neo_representation = Neoid::Node.from_hash(value, self.class.neo4j_connection)
         end.then do |result|
           neo_search_index
         end
@@ -184,7 +184,7 @@ module Neoid
       end
       
       def neo_load(hash)
-        Neoid::Node.from_hash(hash)
+        Neoid::Node.from_hash(hash, self.class.neo4j_connection)
       end
       
       def neo_node

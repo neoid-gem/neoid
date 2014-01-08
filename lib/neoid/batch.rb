@@ -111,7 +111,7 @@ module Neoid
           else return result
           end
 
-          type.from_hash(result)
+          type.from_hash(result, @instance)
         end
       end
   end

@@ -17,8 +17,8 @@ module Neoid
       end
     end
 
-    def self.from_hash(hash)
-      relationship = RelationshipLazyProxy.new(hash, self.neo4j_connection)
+    def self.from_hash(hash, connection)
+      relationship = RelationshipLazyProxy.new(hash, connection)
 
       relationship
     end
@@ -32,7 +32,7 @@ module Neoid
       def neo4j_connection
         @neorj_connection ||= begin
           instance = Neoid.connection(@neo4j_connection_name)
-          initialize_relationship receiver if instance.env_loaded
+          Neoid::Relationship.initialize_relationship self if instance.env_loaded
           instance.relationship_models << self
           instance
         end
@@ -42,7 +42,7 @@ module Neoid
     module InstanceMethods
       def neo_find_by_id
         results = self.class.neo4j_connection.db.get_relationship_auto_index(Neoid::UNIQUE_ID_KEY, self.neo_unique_id)
-        relationship = results.present? ? Neoid::Relationship.from_hash(results[0]) : nil
+        relationship = results.present? ? Neoid::Relationship.from_hash(results[0], self.class.neo4j_connection) : nil
         relationship
       end
       
@@ -98,16 +98,16 @@ module Neoid
           rel_type: rel_type
         }
 
-        Neoid::logger.info "Relationship#neo_save #{self.class.name} #{self.id}"
+        self.class.neo4j_connection.logger.info "Relationship#neo_save #{self.class.name} #{self.id}"
         
         self.class.neo4j_connection.execute_script_or_add_to_batch gremlin_query, script_vars do |value|
-          Neoid::Relationship.from_hash(value)
+          Neoid::Relationship.from_hash(value, self.class.neo4j_connection)
         end
 
       end
       
       def neo_load(hash)
-        Neoid::Relationship.from_hash(hash)
+        Neoid::Relationship.from_hash(hash, self.class.neo4j_connection)
       end
 
       def neo_relationship

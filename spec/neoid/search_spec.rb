@@ -5,20 +5,20 @@ describe Neoid::ModelAdditions do
     let(:index_name) { "articles_search_index_#{Time.now.to_f.to_s.gsub('.', '')}" }
     
     it "should index and find node in fulltext" do
-      Neoid.db.create_node_index(index_name, "fulltext", "lucene")
+      Neoid.connection.db.create_node_index(index_name, "fulltext", "lucene")
       
       n = Neography::Node.create(name: "test hello world", year: 2012)
-      Neoid.db.add_node_to_index(index_name, "name", n.name, n)
-      Neoid.db.add_node_to_index(index_name, "year", n.year, n)
+      Neoid.connection.db.add_node_to_index(index_name, "name", n.name, n)
+      Neoid.connection.db.add_node_to_index(index_name, "year", n.year, n)
       
       [
         "name:test",
         "year:2012",
         "name:test AND year:2012"
       ].each { |q|
-        results = Neoid.db.find_node_index(index_name, q)
+        results = Neoid.connection.db.find_node_index(index_name, q)
         results.length.should == 1
-        Neoid.db.send(:get_id, results).should == n.neo_id
+        Neoid.connection.db.send(:get_id, results).should == n.neo_id
       }
     end
     
@@ -31,11 +31,11 @@ describe Neoid::ModelAdditions do
         "year:#{r}",
         "title:#{r} AND year:#{r}"
       ].each do |q|
-        results = Neoid.db.find_node_index(Neoid::DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, q)
+        results = Neoid.connection.db.find_node_index(Neoid::DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, q)
 
         results.should_not be_nil
         results.length.should == 1
-        Neoid.db.send(:get_id, results).should == article.neo_node.neo_id
+        Neoid.connection.db.send(:get_id, results).should == article.neo_node.neo_id
       end
     end
     
@@ -80,11 +80,11 @@ describe Neoid::ModelAdditions do
       end
 
       it "should search in multiple types" do
-        Neoid.search([Article, Movie], "manga").results.should =~ @articles + @movies
+        Neoid.connection.search([Article, Movie], "manga").results.should =~ @articles + @movies
       end
 
       it "should search in single type when specified" do
-        Neoid.search([Article], "manga").results.should =~ @articles
+        Neoid.connection.search([Article], "manga").results.should =~ @articles
       end
     end
 
@@ -99,17 +99,17 @@ describe Neoid::ModelAdditions do
       end
 
       it "should return search results only matches with AND" do
-        Neoid.search([Article],"manga comics").results.size.should eq(1)
+        Neoid.connection.search([Article],"manga comics").results.size.should eq(1)
 
-        Neoid.search([Article],"manga comics",{match_type: "AND"}).results.size.should eq(1)
+        Neoid.connection.search([Article],"manga comics",{match_type: "AND"}).results.size.should eq(1)
       end
 
       it "should return search results all results with OR" do
-        Neoid.search([Article],"manga comics",{match_type: "OR"}).results.size.should eq(4)
+        Neoid.connection.search([Article],"manga comics",{match_type: "OR"}).results.size.should eq(4)
       end
 
       it "should fail with wrong match_type" do
-        expect {Neoid.search([Article],"manga comics",{match_type: "MAYBE"})}.to raise_error("Invalid match_type option. Valid values are AND,OR")
+        expect {Neoid.connection.search([Article],"manga comics",{match_type: "MAYBE"})}.to raise_error("Invalid match_type option. Valid values are AND,OR")
       end
 
     end
