@@ -20,7 +20,7 @@ module Neoid
       Thread.current[:neoid_current_batch] = nil
     end
 
-    def initialize(options={}, &block)
+    def initialize(instance, options={}, &block)
       if options.respond_to?(:call) && !block
         block = options
         options = {}
@@ -28,6 +28,7 @@ module Neoid
 
       options.reverse_merge!(self.class.default_options)
 
+      @instance = instance
       @options = options
       @block = block
     end
@@ -71,7 +72,7 @@ module Neoid
         self.class.reset_current_batch
       end
 
-      Neoid.logger.info "Neoid batch (#{commands.length} commands)"
+      @instance.logger.info "Neoid batch (#{commands.length} commands)"
 
       flush_batch
 
@@ -83,12 +84,12 @@ module Neoid
         return [] if commands.empty?
         current_results = nil
 
-        # results = Neoid.db.batch(*commands).collect { |result| result['body'] }
+        # results = @instance.db.batch(*commands).collect { |result| result['body'] }
 
         benchmark = Benchmark.measure {
-          current_results = Neoid.db.batch(*commands).collect { |result| result['body'] }
+          current_results = @instance.db.batch(*commands).collect { |result| result['body'] }
         }
-        Neoid.logger.info "Neoid batch (#{commands.length} commands) - #{benchmark}"
+        @instance.logger.info "Neoid batch (#{commands.length} commands) - #{benchmark}"
         commands.clear
 
         process_results(current_results)
@@ -110,7 +111,7 @@ module Neoid
           else return result
           end
 
-          type.from_hash(result)
+          type.from_hash(result, @instance)
         end
       end
   end
@@ -133,11 +134,11 @@ module Neoid
   end
 
   # returned from adding (<<) an item to a batch in a batch block:
-  # Neoid.batch { |batch| (batch << [:neography_command, param]).is_a?(SingleResultPromiseProxy) }
+  # @instance.batch { |batch| (batch << [:neography_command, param]).is_a?(SingleResultPromiseProxy) }
   # so a `.then` can be chained:
-  # Neoid.batch { |batch| (batch << [:neography_command, param]).then { |result| puts result } }
+  # @instance.batch { |batch| (batch << [:neography_command, param]).then { |result| puts result } }
   # the `then` is called once the batch is flushed with the result of the single job in the batch
-  # it proxies all methods to the result, so in case it is returned (like in Neoid.execute_script_or_add_to_batch)
+  # it proxies all methods to the result, so in case it is returned (like in @instance.execute_script_or_add_to_batch)
   # the result of the method will be proxied to the result from the batch. See Node#neo_save
   class SingleResultPromiseProxy
     def initialize(*args)

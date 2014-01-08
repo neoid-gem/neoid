@@ -3,17 +3,22 @@ module Neoid
     # this is a proxy that delays loading of start_node and end_node from Neo4j until accessed.
     # the original Neography Relatioship loaded them on initialization
     class RelationshipLazyProxy < ::Neography::Relationship
+      def initialize(hash, instance)
+        @instance = instance
+        super(hash)
+      end
+
       def start_node
-        @start_node_from_db ||= @start_node = Neography::Node.load(@start_node, Neoid.db)
+        @start_node_from_db ||= @start_node = Neography::Node.load(@start_node, @instance.db)
       end
 
       def end_node
-        @end_node_from_db ||= @end_node = Neography::Node.load(@end_node, Neoid.db)
+        @end_node_from_db ||= @end_node = Neography::Node.load(@end_node, @instance.db)
       end
     end
 
-    def self.from_hash(hash)
-      relationship = RelationshipLazyProxy.new(hash)
+    def self.from_hash(hash, connection)
+      relationship = RelationshipLazyProxy.new(hash, connection)
 
       relationship
     end
@@ -23,17 +28,24 @@ module Neoid
       def delete_command
         :delete_relationship
       end
+
+      def neo_init (connection_name = nil)
+        @neo4j_connection_name = connection_name
+          Neoid::Relationship.initialize_relationship self if neo4j_connection.env_loaded
+        neo4j_connection.relationship_models << self
+        neo4j_connection
+      end
     end
 
     module InstanceMethods
       def neo_find_by_id
-        results = Neoid.db.get_relationship_auto_index(Neoid::UNIQUE_ID_KEY, self.neo_unique_id)
-        relationship = results.present? ? Neoid::Relationship.from_hash(results[0]) : nil
+        results = self.class.neo4j_connection.db.get_relationship_auto_index(Neoid::UNIQUE_ID_KEY, self.neo_unique_id)
+        relationship = results.present? ? Neoid::Relationship.from_hash(results[0], self.class.neo4j_connection) : nil
         relationship
       end
       
       def _neo_save
-        return unless Neoid.enabled?
+        return unless self.class.neo4j_connection.enabled?
         
         options = self.class.neoid_config.relationship_options
         
@@ -84,17 +96,16 @@ module Neoid
           rel_type: rel_type
         }
 
-        Neoid::logger.info "Relationship#neo_save #{self.class.name} #{self.id}"
+        self.class.neo4j_connection.logger.info "Relationship#neo_save #{self.class.name} #{self.id}"
         
-        relationship = Neoid.execute_script_or_add_to_batch gremlin_query, script_vars do |value|
-          Neoid::Relationship.from_hash(value)
+        self.class.neo4j_connection.execute_script_or_add_to_batch gremlin_query, script_vars do |value|
+          Neoid::Relationship.from_hash(value, self.class.neo4j_connection)
         end
 
-        relationship
       end
       
       def neo_load(hash)
-        Neoid::Relationship.from_hash(hash)
+        Neoid::Relationship.from_hash(hash, self.class.neo4j_connection)
       end
 
       def neo_relationship
@@ -106,10 +117,6 @@ module Neoid
       receiver.send :include, Neoid::ModelAdditions
       receiver.send :include, InstanceMethods
       receiver.extend         ClassMethods
-      
-      initialize_relationship receiver if Neoid.env_loaded
-
-      Neoid.relationship_models << receiver
     end
 
     def self.meta_data

@@ -2,7 +2,11 @@ module Neoid
   module ModelAdditions
     module ClassMethods
       attr_reader :neoid_config
-      
+
+      def neo4j_connection
+        @neo4j_connection ||= Neoid.connection(@neo4j_connection_name)
+      end
+
       def neoid_config
         @neoid_config ||= Neoid::ModelConfig.new(self)
       end
@@ -10,7 +14,7 @@ module Neoid
       def neoidable(options = {})
         # defaults
         neoid_config.auto_index = true
-        neoid_config.enable_model_index = true # but the Neoid.enable_per_model_indexes is false by default. all models will be true only if the primary option is turned on.
+        neoid_config.enable_model_index = true # but the Neoid::Instance.enable_per_model_indexes is false by default. all models will be true only if the primary option is turned on.
 
         yield(neoid_config) if block_given?
 
@@ -21,7 +25,7 @@ module Neoid
       end
 
       def neo_model_index_name
-        raise "Per Model index is not enabled. Nodes/Relationships are auto indexed with node_auto_index/relationship_auto_index" unless Neoid.config.enable_per_model_indexes || neoid_config.enable_model_index
+        raise "Per Model index is not enabled. Nodes/Relationships are auto indexed with node_auto_index/relationship_auto_index" unless self.neo4j_connection.config.enable_per_model_indexes || neoid_config.enable_model_index
         @index_name ||= "#{self.name.tableize}_index"
       end
     end
@@ -68,7 +72,7 @@ module Neoid
 
         begin
           neo_representation.del
-        rescue Neography::NodeNotFoundException => e
+        rescue Neography::NodeNotFoundException
           Neoid::logger.info "Neoid#neo_destroy entity not found #{self.class.name} #{self.id}"
         end
 

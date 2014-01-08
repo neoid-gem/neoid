@@ -58,12 +58,11 @@ Neography.configure do |c|
   end
 end
 
-Neoid.db = $neo
-
-Neoid.configure do |c|
+Neoid.add_connection(:main, $neo) do |c|
   # should Neoid create sub-reference from the ref node (id#0) to every node-model? default: true
   c.enable_subrefs = true
 end
+Neoid.default_connection_name = :main # Optional if only one connection added (it automagically becomse the default).
 ```
 
 `01_` in the file name is in order to get this file loaded first, before the models (initializers are loaded alphabetically).
@@ -75,12 +74,13 @@ If you have a better idea (I bet you do!) please let me know.
 
 #### Nodes
 
-For nodes, first include the `Neoid::Node` module in your model:
+For nodes, first include the `Neoid::Node` module in your model, and call the neo_init method:
 
 
 ```ruby
 class User < ActiveRecord::Base
   include Neoid::Node
+  neo_init :main # Connection this model should use. Optional. If not given, uses default connection.
 end
 ```
 
@@ -91,6 +91,7 @@ Then, you can customize what fields will be saved on the node in Neo4j, inside `
 ```ruby
 class User < ActiveRecord::Base
   include Neoid::Node
+  neo_init
   
   neoidable do |c|
     c.field :slug
@@ -112,6 +113,7 @@ Let's assume that a `User` can `Like` `Movie`s:
 
 class User < ActiveRecord::Base
   include Neoid::Node
+  neo_init
 
   has_many :likes
   has_many :movies, through: :likes
@@ -127,6 +129,7 @@ end
 
 class Movie < ActiveRecord::Base
   include Neoid::Node
+  neo_init
 
   has_many :likes
   has_many :users, through: :likes
@@ -156,6 +159,7 @@ class Like < ActiveRecord::Base
   belongs_to :movie
 
   include Neoid::Relationship
+  neo_init
 
   neoidable do |c|
     c.relationship start_node: :user, end_node: :movie, type: :likes
@@ -188,6 +192,7 @@ If you'd like to save nodes manually rather than after_save, use `auto_index: fa
 ```ruby
 class User < ActiveRecord::Base
   include Neoid::Node
+  neo_init
   
   neoidable auto_index: false do |c|
   end
@@ -211,10 +216,10 @@ Nodes and relationships are auto indexed in the `node_auto_index` and `relations
 That means, you can query like this:
 
 ```ruby
-Neoid.db.get_node_auto_index(Neoid::UNIQUE_ID_KEY, user.neo_unique_id)
+User.neo4j_connection.db.get_node_auto_index(Neoid::UNIQUE_ID_KEY, user.neo_unique_id)
 # => returns a Neography hash
 
-Neoid::Node.from_hash(Neoid.db.get_node_auto_index(Neoid::UNIQUE_ID_KEY, user.neo_unique_id))
+Neoid::Node.from_hash(User.neo4j_connection.db.get_node_auto_index(Neoid::UNIQUE_ID_KEY, user.neo_unique_id))
 # => returns a Neography::Node
 ```
 
@@ -223,7 +228,7 @@ Neoid::Node.from_hash(Neoid.db.get_node_auto_index(Neoid::UNIQUE_ID_KEY, user.ne
 If Subreferences are enabled, you can get the subref node and then get all attached nodes:
 
 ```ruby
-Neoid.ref_node.outgoing('users_subref').first.outgoing('users').to_a
+User.neo4j_connection.ref_node.outgoing('users_subref').first.outgoing('users').to_a
 # => this, according to Neography, returns an array of Neography::Node so no conversion is needed
 ```
 
@@ -249,7 +254,7 @@ gremlin_query = <<-GREMLIN
   m.sort{-it.value}.collect{it.key.ar_id}
 GREMLIN
 
-movie_ids = Neoid.db.execute_script(gremlin_query)
+movie_ids = Movie.neo4j_connection.db.execute_script(gremlin_query)
 
 Movie.where(id: movie_ids)
 ```
@@ -275,7 +280,7 @@ gremlin_query = <<-GREMLIN
     .except(movies).collect{it.ar_id}
 GREMLIN
 
-movie_ids = Neoid.db.execute_script(gremlin_query, unique_id_key: Neoid::UNIQUE_ID_KEY, user_unique_id: user.neo_unique_id)
+movie_ids = Movie.neo4j_connection.db.execute_script(gremlin_query, unique_id_key: Neoid::UNIQUE_ID_KEY, user_unique_id: user.neo_unique_id)
 
 Movie.where(id: movie_ids)
 ```
@@ -291,6 +296,7 @@ Using `search` block inside a `neoidable` block, you can store certain fields.
 
 class Movie < ActiveRecord::Base
   include Neoid::Node
+  neo_init
 
   neoidable do |c|
     c.field :slug
@@ -319,8 +325,8 @@ Movie.neo_search("*hello*").results
 # same as above but returns hashes with the values that were indexed on Neo4j
 Movie.search("*hello*").hits
 
-# search in multiple types
-Neoid.neo_search([Movie, User], "hello")
+# search in multiple types (within a given neo4j instance)
+Neoid.connection(:main).neo_search([Movie, User], "hello")
 
 # search with exact matches (pass a hash of field/value)
 Movie.neo_search(year: 2013).results
@@ -335,7 +341,7 @@ Neoid has a batch ability, that is good for mass updateing/inserting of nodes/re
 A few examples, easy to complex:
 
 ```ruby
-Neoid.batch(batch_size: 100) do
+Neoid.connection(:main).batch(batch_size: 100) do
   User.all.each(&:neo_save)
 end
 ```
@@ -344,7 +350,7 @@ With `then`:
 ```ruby
 User.first.name # => "Elad"
 
-Neoid.batch(batch_size: 100) do
+Neoid.connection(:main).batch(batch_size: 100) do
   User.all.each(&:neo_save)
 end.then do |results|
   # results is an array of the script results from neo4j REST.
@@ -358,7 +364,7 @@ end
 With individual `then` as well as `then` for the entire batch:
 
 ```ruby
-Neoid.batch(batch_size: 30) do |batch|
+Neoid.connection(:main).batch(batch_size: 30) do |batch|
   (1..90).each do |i|
     (batch << [:create_node, { name: "Hello #{i}" }]).then { |result| puts result.name }
   end
@@ -378,7 +384,7 @@ If you have an existing database and just want to integrate Neoid, configure the
 Use batches! It's free, and much faster. Also, you should use `includes` to incude the relationship edges on relationship entities, so it doesn't query the DB on each relationship.
 
 ```ruby
-Neoid.batch do
+Neoid.connection(:main).batch do
   [ Like.includes(:user).includes(:movie), OtherRelationshipModel.includes(:from_model).includes(:to_model) ].each { |model| model.all.each(&:neo_save) }
 
   NodeModel.all.each(&:neo_save)

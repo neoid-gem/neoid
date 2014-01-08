@@ -1,13 +1,19 @@
 module Neoid
   module Node
-    def self.from_hash(hash)
+    def self.from_hash(hash, connection)
       node = Neography::Node.new(hash)
-      node.neo_server = Neoid.db
+      node.neo_server = connection.db
       node
     end
 
     module ClassMethods
       attr_accessor :neo_subref_node
+
+      def neo_init (connection_name = nil)
+        @neo4j_connection_name = connection_name
+        neo4j_connection.node_models << self
+        neo4j_connection
+      end
 
       def neo_subref_rel_type
         @_neo_subref_rel_type ||= "#{self.name.tableize}_subref"
@@ -22,26 +28,26 @@ module Neoid
       end
 
       def neo_model_index
-        return nil unless Neoid.config.enable_per_model_indexes
+        return nil unless self.neo4j_connection.config.enable_per_model_indexes
 
-        Neoid::logger.info "Node#neo_model_index #{neo_subref_rel_type}"
+        self.neo4j_connection.logger.info "Node#neo_model_index #{neo_subref_rel_type}"
 
         gremlin_query = <<-GREMLIN
           g.createManualIndex(neo_model_index_name, Vertex.class);
         GREMLIN
 
-        # Neoid.logger.info "subref query:\n#{gremlin_query}"
+        # self.neo4j_connection.logger.info "subref query:\n#{gremlin_query}"
 
         script_vars = { neo_model_index_name: neo_model_index_name }
 
-        Neoid.execute_script_or_add_to_batch gremlin_query, script_vars
+        self.neo4j_connection.execute_script_or_add_to_batch gremlin_query, script_vars
       end
 
       def neo_subref_node
-        return nil unless Neoid.config.enable_subrefs
+        return nil unless self.neo4j_connection.config.enable_subrefs
 
         @neo_subref_node ||= begin
-          Neoid::logger.info "Node#neo_subref_node #{neo_subref_rel_type}"
+          self.neo4j_connection.logger.info "Node#neo_subref_node #{neo_subref_rel_type}"
 
           gremlin_query = <<-GREMLIN
             q = g.v(0).out(neo_subref_rel_type);
@@ -56,15 +62,15 @@ module Neoid
             subref
           GREMLIN
 
-          # Neoid.logger.info "subref query:\n#{gremlin_query}"
+          # self.neo4j_connection.logger.info "subref query:\n#{gremlin_query}"
 
           script_vars = {
             neo_subref_rel_type: neo_subref_rel_type,
             name: self.name
           }
 
-          Neoid.execute_script_or_add_to_batch gremlin_query, script_vars do |value|
-            Neoid::Node.from_hash(value)
+          self.neo4j_connection.execute_script_or_add_to_batch gremlin_query, script_vars do |value|
+            Neoid::Node.from_hash(value, self.neo4j_connection)
           end
         end
       end
@@ -74,19 +80,19 @@ module Neoid
       end
 
       def neo_search(term, options = {})
-        Neoid.search(self, term, options)
+        self.neo4j_connection.search(self, term, options)
       end
     end
     
     module InstanceMethods
       def neo_find_by_id
-        # Neoid::logger.info "Node#neo_find_by_id #{self.class.neo_index_name} #{self.id}"
-        node = Neoid.db.get_node_auto_index(Neoid::UNIQUE_ID_KEY, self.neo_unique_id)
-        node.present? ? Neoid::Node.from_hash(node[0]) : nil
+        # self.neo4j_connection.logger.info "Node#neo_find_by_id #{self.class.neo_index_name} #{self.id}"
+        node = self.class.neo4j_connection.db.get_node_auto_index(Neoid::UNIQUE_ID_KEY, self.neo_unique_id)
+        node.present? ? Neoid::Node.from_hash(node[0], self.class.neo4j_connection) : nil
       end
       
       def _neo_save
-        return unless Neoid.enabled?
+        return unless self.class.neo4j_connection.enabled?
 
         data = self.to_neo.merge(ar_type: self.class.name, ar_id: self.id, Neoid::UNIQUE_ID_KEY => self.neo_unique_id)
         data.reject! { |k, v| v.nil? }
@@ -118,27 +124,27 @@ module Neoid
           unique_id_key: Neoid::UNIQUE_ID_KEY,
           node_data: data,
           unique_id: self.neo_unique_id,
-          enable_subrefs: Neoid.config.enable_subrefs,
-          enable_model_index: Neoid.config.enable_per_model_indexes && self.class.neoid_config.enable_model_index
+          enable_subrefs: self.class.neo4j_connection.config.enable_subrefs,
+          enable_model_index: self.class.neo4j_connection.config.enable_per_model_indexes && self.class.neoid_config.enable_model_index
         }
 
-        if Neoid.config.enable_subrefs
+        if self.class.neo4j_connection.config.enable_subrefs
           script_vars.update(
             subref_id: self.class.neo_subref_node.neo_id,
             neo_subref_node_rel_type: self.class.neo_subref_node_rel_type
           )
         end
 
-        if Neoid.config.enable_per_model_indexes && self.class.neoid_config.enable_model_index
+        if self.class.neo4j_connection.config.enable_per_model_indexes && self.class.neoid_config.enable_model_index
           script_vars.update(
             neo_model_index_name: self.class.neo_model_index_name
           )
         end
 
-        Neoid::logger.info "Node#neo_save #{self.class.name} #{self.id}"
+        self.class.neo4j_connection.logger.info "Node#neo_save #{self.class.name} #{self.id}"
 
-        node = Neoid.execute_script_or_add_to_batch(gremlin_query, script_vars) do |value|
-          @_neo_representation = Neoid::Node.from_hash(value)
+        node = self.class.neo4j_connection.execute_script_or_add_to_batch(gremlin_query, script_vars) do |value|
+          @_neo_representation = Neoid::Node.from_hash(value, self.class.neo4j_connection)
         end.then do |result|
           neo_search_index
         end
@@ -152,16 +158,16 @@ module Neoid
           self.class.neoid_config.search_options.fulltext_fields.blank?
         )
 
-        Neoid.ensure_default_fulltext_search_index
+        self.class.neo4j_connection.ensure_default_fulltext_search_index
 
-        Neoid.db.add_node_to_index(DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, 'ar_type', self.class.name, neo_node.neo_id)
+        self.class.neo4j_connection.db.add_node_to_index(Neoid::DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, 'ar_type', self.class.name, neo_node.neo_id)
 
         self.class.neoid_config.search_options.fulltext_fields.each do |field, options|
-          Neoid.db.add_node_to_index(DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, "#{field}_fulltext", neo_helper_get_field_value(field, options), neo_node.neo_id)
+          self.class.neo4j_connection.db.add_node_to_index(Neoid::DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, "#{field}_fulltext", neo_helper_get_field_value(field, options), neo_node.neo_id)
         end
 
         self.class.neoid_config.search_options.index_fields.each do |field, options|
-          Neoid.db.add_node_to_index(DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, field, neo_helper_get_field_value(field, options), neo_node.neo_id)
+          self.class.neo4j_connection.db.add_node_to_index(Neoid::DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, field, neo_helper_get_field_value(field, options), neo_node.neo_id)
         end
 
         neo_node
@@ -176,7 +182,7 @@ module Neoid
       end
       
       def neo_load(hash)
-        Neoid::Node.from_hash(hash)
+        Neoid::Node.from_hash(hash, self.class.neo4j_connection)
       end
       
       def neo_node
@@ -195,7 +201,7 @@ module Neoid
       end
 
       def neo_after_relationship_through_remove(record)
-        @__neo_temp_rels.each { |record, relationship| relationship.neo_destroy }
+        @__neo_temp_rels.each { |r, relationship| relationship.neo_destroy }
         @__neo_temp_rels.delete(record)
       end
     end
@@ -204,7 +210,6 @@ module Neoid
       receiver.send :include, Neoid::ModelAdditions
       receiver.extend         ClassMethods
       receiver.send :include, InstanceMethods
-      Neoid.node_models << receiver
     end
   end
 end

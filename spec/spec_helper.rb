@@ -6,7 +6,6 @@ require 'rest-client'
 # ENV['NEOID_LOG'] = 'true'
 
 uri = URI.parse(ENV["NEO4J_URL"] ? ENV["NEO4J_URL"] : ENV['TRAVIS'] ? "http://localhost:7474" : "http://localhost:7574")
-$neo = Neography::Rest.new(uri.to_s)
 
 Neography.configure do |c|
   c.server = uri.host
@@ -19,7 +18,10 @@ Neography.configure do |c|
   end
 end
 
-Neoid.db = $neo
+$neo = Neography::Rest.new(uri.to_s)
+
+Neoid.default_connection_name = :main
+Neoid.add_connection(:main, $neo)
 
 logger, ActiveRecord::Base.logger = ActiveRecord::Base.logger, Logger.new('/dev/null')
 ActiveRecord::Base.configurations = YAML::load(IO.read(File.join(File.dirname(__FILE__), 'support/database.yml')))
@@ -37,9 +39,11 @@ RSpec.configure do |config|
   end
   
   config.before(:each) do
-    Neoid.node_models.each(&:destroy_all)
-    Neoid.clean_db(:yes_i_am_sure)
-    Neoid.reset_cached_variables
+    Neoid.connections.each do |name, conn|
+      conn.node_models.each(&:destroy_all)
+      conn.clean_db(:yes_i_am_sure)
+      conn.reset_cached_variables
+    end
   end
 end
 
