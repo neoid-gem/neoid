@@ -3,8 +3,8 @@ module Neoid
     module ClassMethods
       attr_reader :neoid_config
 
-      def use_neo4j_connection (name)
-        @neo4j_connection_name = name
+      def neo4j_connection
+        @neo4j_connection ||= Neoid.connection(@neo4j_connection_name)
       end
 
       def neoid_config

@@ -1,6 +1,5 @@
 class User < ActiveRecord::Base
   include ActiveModel::Validations::Callbacks
-
   
   has_many :likes
   has_many :movies, through: :likes
@@ -21,7 +20,8 @@ class User < ActiveRecord::Base
   end
   
   include Neoid::Node
-  
+  neo_init :main
+
   neoidable do |c|
     c.field :name
     c.field :slug
@@ -35,6 +35,7 @@ class Movie < ActiveRecord::Base
   has_many :users, through: :likes
   
   include Neoid::Node
+  neo_init
   
   neoidable do |c|
     c.field :name
@@ -58,6 +59,7 @@ class UserFollow < ActiveRecord::Base
   belongs_to :item, polymorphic: true
   
   include Neoid::Relationship
+  neo_init
   
   neoidable do |c|
     c.relationship start_node: :user, end_node: :item, type: :follows
@@ -71,6 +73,7 @@ class Like < ActiveRecord::Base
   belongs_to :movie
   
   include Neoid::Relationship
+  neo_init
   
   neoidable do |c|
     c.relationship start_node: :user, end_node: :movie, type: :likes
@@ -81,6 +84,8 @@ end
 class Article < ActiveRecord::Base
   include ActiveModel::Validations::Callbacks
   include Neoid::Node
+  neo_init
+
   neoidable do |c|
     c.field :title
     c.field :year
@@ -101,6 +106,8 @@ end
 class NoAutoIndexNode < ActiveRecord::Base
   include ActiveModel::Validations::Callbacks
   include Neoid::Node
+  neo_init
+
   neoidable auto_index: false do |c|
     c.field :name
   end

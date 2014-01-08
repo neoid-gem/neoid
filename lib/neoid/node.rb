@@ -9,6 +9,12 @@ module Neoid
     module ClassMethods
       attr_accessor :neo_subref_node
 
+      def neo_init (connection_name = nil)
+        @neo4j_connection_name = connection_name
+        neo4j_connection.node_models << self
+        neo4j_connection
+      end
+
       def neo_subref_rel_type
         @_neo_subref_rel_type ||= "#{self.name.tableize}_subref"
       end
@@ -19,14 +25,6 @@ module Neoid
 
       def delete_command
         :delete_node
-      end
-
-      def neo4j_connection
-        @neo4j_connection ||= begin
-          instance = Neoid.connection(@neo4j_connection_name)
-          instance.node_models << self
-          instance
-        end
       end
 
       def neo_model_index

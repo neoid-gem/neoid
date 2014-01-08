@@ -29,13 +29,11 @@ module Neoid
         :delete_relationship
       end
 
-      def neo4j_connection
-        @neorj_connection ||= begin
-          instance = Neoid.connection(@neo4j_connection_name)
-          Neoid::Relationship.initialize_relationship self if instance.env_loaded
-          instance.relationship_models << self
-          instance
-        end
+      def neo_init (connection_name = nil)
+        @neo4j_connection_name = connection_name
+          Neoid::Relationship.initialize_relationship self if neo4j_connection.env_loaded
+        neo4j_connection.relationship_models << self
+        neo4j_connection
       end
     end
 

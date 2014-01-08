@@ -33,10 +33,10 @@ module Neoid
         end
       end
 
+      raise ArgumentError.new("No Neo4j connection with name #{name}.") unless name && connections.key?(name)
+
       if connections.key? name
         connections[name]
-      else
-        raise ArgumentError.new("No Neo4j connection with name #{name}.")
       end
     end
 

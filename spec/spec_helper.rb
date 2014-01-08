@@ -20,6 +20,7 @@ end
 
 $neo = Neography::Rest.new(uri.to_s)
 
+Neoid.default_connection_name = :main
 Neoid.add_connection(:main, $neo)
 
 logger, ActiveRecord::Base.logger = ActiveRecord::Base.logger, Logger.new('/dev/null')
