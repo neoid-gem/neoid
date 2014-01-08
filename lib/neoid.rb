@@ -47,9 +47,15 @@ module Neoid
     end
 
     def initialize_all
-      connections.each do |name, instance|
-        instance.initialize_all
-      end
+      connections.values.each(&:initialize_all)
+    end
+
+    def clean_db(confirm)
+      connections.values.each {|i| i.clean_db(confirm)}
+    end
+
+    def reset_cached_variables
+      connections.values.each(&:reset_cached_variables)
     end
   end
 end
