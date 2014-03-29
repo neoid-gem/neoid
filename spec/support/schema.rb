@@ -1,4 +1,8 @@
 ActiveRecord::Schema.define :version => 0 do
+  # enable JSON field to be created (Matching PostgreSQL 9.2 and up)
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "plpgsql"
+
   create_table :users do |t|
     t.string :name
     t.string :slug
@@ -40,5 +44,10 @@ ActiveRecord::Schema.define :version => 0 do
 
   create_table :no_auto_index_nodes do |t|
     t.string :name
+  end
+
+  create_table :node_with_jsons do |t|
+    t.json :data
+    t.string :node_type
   end
 end

@@ -2,11 +2,11 @@ module Neoid
   module ModelAdditions
     module ClassMethods
       attr_reader :neoid_config
-      
+
       def neoid_config
         @neoid_config ||= Neoid::ModelConfig.new(self)
       end
-      
+
       def neoidable(options = {})
         # defaults
         neoid_config.auto_index = true
@@ -25,7 +25,7 @@ module Neoid
         @index_name ||= "#{self.name.tableize}_index"
       end
     end
-  
+
     module InstanceMethods
       def to_neo
         if self.class.neoid_config.stored_fields
@@ -35,8 +35,17 @@ module Neoid
             else
               self.send(field) rescue (raise "No field #{field} for #{self.class.name}")
             end
-            
+
             all
+          end
+
+          # optional: if there are fields declared with json_field, merge their hash content to result
+          if self.class.neoid_config.stored_json_fields
+            json_fields_content = self.class.neoid_config.stored_json_fields.inject({}) do |all, field|
+              json_data = self.send(field)
+              all.merge(json_data)
+            end
+            hash.merge!(json_fields_content)
           end
 
           hash.reject { |k, v| v.nil? }

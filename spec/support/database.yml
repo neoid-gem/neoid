@@ -4,3 +4,14 @@ sqlite3:
   encoding: utf8
   charset: utf8
   timeout: 5000
+
+postgresql:
+  adapter: postgresql
+  database: neoid_in_development
+  encoding: utf8
+  charset: utf8
+  timeout: 5000
+  pool: 5
+  username: postgres
+  password: password
+  host: localhost
