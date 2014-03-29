@@ -163,7 +163,7 @@ class Like < ActiveRecord::Base
 end
 ```
 
-Neoid adds the metohds `neo_node` and `neo_relationships` to instances of nodes and relationships, respectively.
+Neoid adds the methods `neo_node` and `neo_relationships` to instances of nodes and relationships, respectively.
 
 So you could do:
 
