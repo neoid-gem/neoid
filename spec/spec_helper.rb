@@ -5,7 +5,7 @@ require 'rest-client'
 
 # ENV['NEOID_LOG'] = 'true'
 
-uri = URI.parse(ENV["NEO4J_URL"] ? ENV["NEO4J_URL"] : ENV['TRAVIS'] ? "http://localhost:7474" : "http://localhost:7574")
+uri = URI.parse(ENV["NEO4J_URL"] ? ENV["NEO4J_URL"] : ENV['TRAVIS'] ? "http://localhost:7474" : "http://localhost:7474")
 $neo = Neography::Rest.new(uri.to_s)
 
 Neography.configure do |c|
