@@ -101,15 +101,15 @@ describe Neoid::ModelAdditions do
       it 'should return search results only matches with AND' do
         Neoid.search([Article],'manga comics').results.size.should eq(1)
 
-        Neoid.search([Article],'manga comics',{match_type: 'AND'}).results.size.should eq(1)
+        Neoid.search([Article],'manga comics', match_type: 'AND').results.size.should eq(1)
       end
 
       it 'should return search results all results with OR' do
-        Neoid.search([Article],'manga comics',{match_type: 'OR'}).results.size.should eq(4)
+        Neoid.search([Article],'manga comics', match_type: 'OR').results.size.should eq(4)
       end
 
       it 'should fail with wrong match_type' do
-        expect {Neoid.search([Article],'manga comics',{match_type: 'MAYBE'})}.to raise_error('Invalid match_type option. Valid values are AND,OR')
+        expect {Neoid.search([Article],'manga comics', match_type: 'MAYBE')}.to raise_error('Invalid match_type option. Valid values are AND,OR')
       end
     end
   end
