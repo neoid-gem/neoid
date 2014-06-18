@@ -58,20 +58,20 @@ module Neoid
       initialize_auto_index
       initialize_subrefs
       initialize_per_model_indexes
-      begin
-        @initialized_server = true
-        initialize_auto_index
-        initialize_subrefs
-        initialize_per_model_indexes
-      rescue Exception => e
-        @initialized_server = false
-        logger.error "Failed to initialize neoid: #{e.message}"
-      end
+      # begin
+      #   @initialized_server = true
+      #   initialize_auto_index
+      #   initialize_subrefs
+      #   initialize_per_model_indexes
+      # rescue Exception => e
+      #   @initialized_server = false
+      #   logger.error "Failed to initialize neoid: #{e.message}"
+      # end
     end
     
     def db
       raise "Must set Neoid.db with a Neography::Rest instance" unless @db
-      initialize_server unless @initialized_server
+      # initialize_server unless @initialized_server
       @db
     end
 

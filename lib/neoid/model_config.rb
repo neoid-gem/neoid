@@ -25,7 +25,7 @@ module Neoid
     def search(&block)
       raise "search needs a block" unless block_given?
       @search_options = SearchConfig.new
-      block.call(@search_options)
+      block.(@search_options)
     end
     
     def inspect

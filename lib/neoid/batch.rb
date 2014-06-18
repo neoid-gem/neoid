@@ -83,8 +83,6 @@ module Neoid
         return [] if commands.empty?
         current_results = nil
 
-        # results = Neoid.db.batch(*commands).collect { |result| result['body'] }
-
         benchmark = Benchmark.measure {
           current_results = Neoid.db.batch(*commands)
           current_results.collect { |result| result['body'] } if current_results.respond_to?(:collect)
