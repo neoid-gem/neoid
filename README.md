@@ -3,6 +3,8 @@
 [![Code Climate](https://codeclimate.com/github/BenMorganIO/neoid.png)](https://codeclimate.com/github/BenMorganIO/neoid)
 [![Build Status](https://secure.travis-ci.org/BenMorganIO/neoid.png)](http://travis-ci.org/BenMorganIO/neoid)
 
+__This gem is not stable. There are currently no stable versions. We're working on fixing this right now. Apologies.__
+
 Make your ActiveRecords stored and searchable on Neo4j graph database, in order to make fast graph queries that MySQL would crawl while doing them. Originally by [@elado](http://twitter.com/elado).
 
 Neoid is to Neo4j as Sunspot is to Solr. You get the benefits of Neo4j's speed while keeping your schema on your RDBMS.
@@ -36,7 +38,7 @@ We're currently working to bump to 2.1.x land, but for now, you have to use 1.9.
 gem install neo4j-core --pre
 rake neo4j:install[community,1.9.3]
 rake neo4j:start
-``
+```
 
 ## Usage
 
@@ -451,7 +453,7 @@ end
 
 ## Testing This Gem
 
-Run the Neo4j DB on port 7574, and run `rake` from the gem folder.
+Run the Neo4j DB on port 7474, and run `rake` from the gem folder.
 
 ## Contributing
 
