@@ -59,7 +59,7 @@ describe Neoid::Relationship do
     }.to change{ user.neo_node.outgoing(:likes).length }.to(0)
 
     expect {
-      user.movie_ids = movies[0...2].collect(&:id)
+      user.movie_ids = movies[0...2].map(&:id)
     }.to change{ user.neo_node.outgoing(:likes).length }.to(2)
   end
 
