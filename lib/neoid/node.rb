@@ -6,15 +6,22 @@ module Neoid
       node
     end
 
+    def self.included(receiver)
+      receiver.send :include, Neoid::ModelAdditions
+      receiver.extend         ClassMethods
+      receiver.send :include, InstanceMethods
+      Neoid.node_models << receiver
+    end
+    
     module ClassMethods
       attr_accessor :neo_subref_node
 
       def neo_subref_rel_type
-        @_neo_subref_rel_type ||= "#{self.name.tableize}_subref"
+        @_neo_subref_rel_type ||= "#{name.tableize}_subref"
       end
 
       def neo_subref_node_rel_type
-        @_neo_subref_node_rel_type ||= self.name.tableize
+        @_neo_subref_node_rel_type ||= name.tableize
       end
 
       def delete_command
@@ -60,7 +67,7 @@ module Neoid
 
           script_vars = {
             neo_subref_rel_type: neo_subref_rel_type,
-            name: self.name
+            name: name
           }
 
           Neoid.execute_script_or_add_to_batch gremlin_query, script_vars do |value|
@@ -77,18 +84,18 @@ module Neoid
         Neoid.search(self, term, options)
       end
     end
-    
+
     module InstanceMethods
       def neo_find_by_id
         # Neoid::logger.info "Node#neo_find_by_id #{self.class.neo_index_name} #{self.id}"
-        node = Neoid.db.get_node_auto_index(Neoid::UNIQUE_ID_KEY, self.neo_unique_id)
+        node = Neoid.db.get_node_auto_index(Neoid::UNIQUE_ID_KEY, neo_unique_id)
         node.present? ? Neoid::Node.from_hash(node[0]) : nil
       end
-      
+
       def _neo_save
         return unless Neoid.enabled?
 
-        data = self.to_neo.merge(ar_type: self.class.name, ar_id: self.id, Neoid::UNIQUE_ID_KEY => self.neo_unique_id)
+        data = to_neo.merge(ar_type: self.class.name, ar_id: id, Neoid::UNIQUE_ID_KEY => neo_unique_id)
         data.reject! { |k, v| v.nil? }
 
         gremlin_query = <<-GREMLIN
@@ -114,10 +121,10 @@ module Neoid
           node
         GREMLIN
 
-         script_vars = {
+        script_vars = {
           unique_id_key: Neoid::UNIQUE_ID_KEY,
           node_data: data,
-          unique_id: self.neo_unique_id,
+          unique_id: neo_unique_id,
           enable_subrefs: Neoid.config.enable_subrefs,
           enable_model_index: Neoid.config.enable_per_model_indexes && self.class.neoid_config.enable_model_index
         }
@@ -135,7 +142,7 @@ module Neoid
           )
         end
 
-        Neoid::logger.info "Node#neo_save #{self.class.name} #{self.id}"
+        Neoid::logger.info "Node#neo_save #{self.class.name} #{id}"
 
         node = Neoid.execute_script_or_add_to_batch(gremlin_query, script_vars) do |value|
           @_neo_representation = Neoid::Node.from_hash(value)
@@ -171,14 +178,14 @@ module Neoid
         if options[:block]
           options[:block].call
         else
-          self.send(field) rescue (raise "No field #{field} for #{self.class.name}")
+          send(field) rescue (raise "No field #{field} for #{self.class.name}")
         end
       end
-      
+
       def neo_load(hash)
         Neoid::Node.from_hash(hash)
       end
-      
+
       def neo_node
         _neo_representation
       end
@@ -191,20 +198,13 @@ module Neoid
         rel_model, foreign_key_of_owner, foreign_key_of_record = Neoid::Relationship.meta_data[self.class.name.to_s][record.class.name.to_s]
         rel_model = rel_model.to_s.constantize
         @__neo_temp_rels ||= {}
-        @__neo_temp_rels[record] = rel_model.where(foreign_key_of_owner => self.id, foreign_key_of_record => record.id).first
+        @__neo_temp_rels[record] = rel_model.where(foreign_key_of_owner => id, foreign_key_of_record => record.id).first
       end
 
       def neo_after_relationship_through_remove(record)
         @__neo_temp_rels.each { |record, relationship| relationship.neo_destroy }
         @__neo_temp_rels.delete(record)
       end
-    end
-      
-    def self.included(receiver)
-      receiver.send :include, Neoid::ModelAdditions
-      receiver.extend         ClassMethods
-      receiver.send :include, InstanceMethods
-      Neoid.node_models << receiver
     end
   end
 end

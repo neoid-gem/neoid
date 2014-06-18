@@ -1,3 +1,6 @@
+## v0.1.2
+Just design changes under the hood to keep this gem working and actively maintained.
+
 ## v0.1.1
 
 * Added batch support, for much faster intiialization of current DB or reindexing all DB.

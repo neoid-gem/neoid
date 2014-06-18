@@ -67,7 +67,7 @@ module Neoid
 
       begin
         @block.call(self)
-      ensure      
+      ensure
         self.class.reset_current_batch
       end
 
@@ -79,40 +79,40 @@ module Neoid
     end
 
     private
-      def flush_batch
-        return [] if commands.empty?
-        current_results = nil
 
-        # results = Neoid.db.batch(*commands).collect { |result| result['body'] }
+    def flush_batch
+      return [] if commands.empty?
+      current_results = nil
 
-        benchmark = Benchmark.measure {
-          current_results = Neoid.db.batch(*commands).collect { |result| result['body'] }
-        }
-        Neoid.logger.info "Neoid batch (#{commands.length} commands) - #{benchmark}"
-        commands.clear
+      benchmark = Benchmark.measure {
+        current_results = Neoid.db.batch(*commands)
+        current_results.map { |result| result['body'] } if current_results.respond_to?(:map)
+      }
+      Neoid.logger.info "Neoid batch (#{commands.length} commands) - #{benchmark}"
+      commands.clear
 
-        process_results(current_results)
+      process_results(current_results)
 
-        thens.zip(current_results).each { |t, result| t.perform(result) }
+      thens.zip(current_results).each { |t, result| t.perform(result) }
 
-        thens.clear
+      thens.clear
 
-        results.concat current_results
+      results.concat current_results
+    end
+
+    def process_results(results)
+      results.map! do |result|
+        return result unless result.is_a?(Hash) && result['self'] && result['self'][%r[^https?://.*/(node|relationship)/\d+]]
+
+        type = case $1
+               when 'node' then Neoid::Node
+               when 'relationship' then Neoid::Relationship
+               else return result
+               end
+
+        type.from_hash(result)
       end
-
-      def process_results(results)
-        results.map! do |result|
-          return result unless result.is_a?(Hash) && result['self'] && result['self'][%r[^https?://.*/(node|relationship)/\d+]]
-
-          type = case $1
-          when 'node' then Neoid::Node
-          when 'relationship' then Neoid::Relationship
-          else return result
-          end
-
-          type.from_hash(result)
-        end
-      end
+    end
   end
 
   # returned from a full batch, after it has been executed,
@@ -140,13 +140,13 @@ module Neoid
   # it proxies all methods to the result, so in case it is returned (like in Neoid.execute_script_or_add_to_batch)
   # the result of the method will be proxied to the result from the batch. See Node#neo_save
   class SingleResultPromiseProxy
-    def initialize(*args)
+    def initialize(*)
     end
 
     attr_accessor :result
 
     def result
-      raise "Accessed result too soon" unless @result
+      raise 'Accessed result too soon' unless @result
       @result
     end
 

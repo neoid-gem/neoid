@@ -1,17 +1,17 @@
 # Neoid
 
-[![Build Status](https://secure.travis-ci.org/elado/neoid.png)](http://travis-ci.org/elado/neoid)
+[![Code Climate](https://codeclimate.com/github/BenMorganIO/neoid.png)](https://codeclimate.com/github/BenMorganIO/neoid)
+[![Build Status](https://secure.travis-ci.org/BenMorganIO/neoid.png)](http://travis-ci.org/BenMorganIO/neoid)
 
+Make your ActiveRecords stored and searchable on Neo4j graph database, in order to make fast graph queries that MySQL would crawl while doing them. Originally by [@elado](http://twitter.com/elado).
 
-Make your ActiveRecords stored and searchable on Neo4j graph database, in order to make fast graph queries that MySQL would crawl while doing them.
+Neoid is to Neo4j as Sunspot is to Solr. You get the benefits of Neo4j's speed while keeping your schema on your RDBMS.
 
-Neoid to Neo4j is like Sunspot to Solr. You get the benefits of Neo4j speed while keeping your schema on your plain old RDBMS.
-
-Neoid doesn't require JRuby. It's based on the great [Neography](https://github.com/maxdemarzi/neography) gem which uses Neo4j's REST API.
+Neoid does not require JRuby. It's based on the [Neography](https://github.com/maxdemarzi/neography) gem which uses Neo4j's REST API.
 
 Neoid offers querying Neo4j for IDs of objects and then fetch them from your RDBMS, or storing all desired data on Neo4j.
 
-**Important: Heroku Support is not available because Herokud doesn't support Gremlin. So until further notice, easiest way is to self host a Neo4j on EC2 in the same zone, and connect from your dyno to it**
+**Important: Heroku Support is not available because Herokud doesn't support Gremlin. So until further notice, easiest way is to self host a Neo4j on EC2 in the same zone, and connect from your dyno to it. Removing Gremlin is currently #1 on the priority list.**
 
 ## Changelog
 
@@ -26,19 +26,23 @@ Add to your Gemfile and run the `bundle` command to install it.
 gem 'neoid', '~> 0.1.1'
 ```
 
-**Requires Ruby 1.9.2 or later.**
+**Requires Ruby 1.9.3 or later and Neo4j 1.9.3.**
 
-## Support
+### Installing Neo4j 1.9.3 for your project
 
-Need help with getting neoid up and running? Got a time-consuming problem you want to get solved quickly?  Get [neoid support on CodersClan](http://codersclan.net/?repo_id=326).
+We're currently working to bump to 2.1.x land, but for now, you have to use 1.9.3. To get started, install neo4j locally in your project with:
 
-<p><a href="http://codersclan.net/?repo_id=326"><img src="http://www.codersclan.net/gs_button/?repo_id=326" width="200" /></a></p>
+```bash
+gem install neo4j-core --pre
+rake neo4j:install[community,1.9.3]
+rake neo4j:start
+``
 
 ## Usage
 
 ### Rails app configuration:
 
-In an initializer, such as `config/initializers/01_neo4j.rb`:
+Initializer neography and neoid in an initializer that is prefixed with `01_`, such as `config/initializers/01_neo4j.rb`:
 
 ```ruby
 ENV["NEO4J_URL"] ||= "http://localhost:7474"
@@ -65,11 +69,6 @@ Neoid.configure do |c|
   c.enable_subrefs = true
 end
 ```
-
-`01_` in the file name is in order to get this file loaded first, before the models (initializers are loaded alphabetically).
-
-If you have a better idea (I bet you do!) please let me know.
-
 
 ### ActiveRecord configuration
 
@@ -471,4 +470,4 @@ Unfortunately, as for now, Neo4j add-on on Heroku doesn't support Gremlin. There
 
 ---
 
-Developed by [@elado](http://twitter.com/elado)
+Developed by [@elado](http://twitter.com/elado) and [@BenMorganIO](http://twitter.com/BenMorganIO)

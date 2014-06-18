@@ -1,4 +1,4 @@
-ActiveRecord::Schema.define :version => 0 do
+ActiveRecord::Schema.define version: 0 do
   create_table :users do |t|
     t.string :name
     t.string :slug
@@ -21,7 +21,6 @@ ActiveRecord::Schema.define :version => 0 do
 
     t.timestamps
   end
-
 
   create_table :articles do |t|
     t.string :title
