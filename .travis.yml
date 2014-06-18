@@ -1,4 +1,4 @@
-script: "bundle exec rake neo4j:install neo4j:start spec --trace"
+script: 'CODECLIMATE_REPO_TOKEN=da28b5f5275a1b7a54264596b15692d00c7577a96e35eefb16e6d76c63e045a8 bundle exec rake neo4j:install neo4j:start spec --trace'
 rvm:
   - 1.9.2
   - 1.9.3

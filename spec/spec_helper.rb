@@ -2,8 +2,10 @@ require 'neoid'
 require 'active_record'
 require 'neography'
 require 'rest-client'
-
+require 'codeclimate-test-reporter'
 # ENV['NEOID_LOG'] = 'true'
+
+CodeClimate::TestReporter.start
 
 uri = URI.parse('http://localhost:7474')
 $neo = Neography::Rest.new(uri.to_s)
