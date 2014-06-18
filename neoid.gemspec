@@ -4,11 +4,11 @@ require 'neoid/version'
 Gem::Specification.new do |s|
   s.name        = 'neoid'
   s.version     = Neoid::VERSION
-  s.authors     = ['Elad Ossadon']
-  s.email       = ['elad@ossadon.com']
+  s.authors     = ['Ben Morgan']
+  s.email       = ['ben@benmorgan.io']
   s.homepage    = ''
   s.summary     = %q(Neo4j for ActiveRecord)
-  s.description = %q(Extend Ruby on Rails ActiveRecord with Neo4j nodes. Keep RDBMS and utilize the power of Neo4j queries)
+  s.description = %q(Extend Ruby on Rails ActiveRecord with Neo4j nodes. Keep RDBMS and utilize the power of Neo4j queries. Originally by @elado.)
 
   s.rubyforge_project = 'neoid'
 

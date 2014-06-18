@@ -3,8 +3,7 @@
 [![Code Climate](https://codeclimate.com/github/BenMorganIO/neoid.png)](https://codeclimate.com/github/BenMorganIO/neoid)
 [![Build Status](https://secure.travis-ci.org/BenMorganIO/neoid.png)](http://travis-ci.org/BenMorganIO/neoid)
 
-
-Make your ActiveRecords stored and searchable on Neo4j graph database, in order to make fast graph queries that MySQL would crawl while doing them.
+Make your ActiveRecords stored and searchable on Neo4j graph database, in order to make fast graph queries that MySQL would crawl while doing them. Originally by @elado.
 
 Neoid to Neo4j is like Sunspot to Solr. You get the benefits of Neo4j speed while keeping your schema on your plain old RDBMS.
 
