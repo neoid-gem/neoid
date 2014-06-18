@@ -6,6 +6,13 @@ module Neoid
       node
     end
 
+    def self.included(receiver)
+      receiver.send :include, Neoid::ModelAdditions
+      receiver.extend         ClassMethods
+      receiver.send :include, InstanceMethods
+      Neoid.node_models << receiver
+    end
+    
     module ClassMethods
       attr_accessor :neo_subref_node
 
@@ -198,13 +205,6 @@ module Neoid
         @__neo_temp_rels.each { |record, relationship| relationship.neo_destroy }
         @__neo_temp_rels.delete(record)
       end
-    end
-
-    def self.included(receiver)
-      receiver.send :include, Neoid::ModelAdditions
-      receiver.extend         ClassMethods
-      receiver.send :include, InstanceMethods
-      Neoid.node_models << receiver
     end
   end
 end
