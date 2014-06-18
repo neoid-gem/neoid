@@ -104,7 +104,10 @@ describe Neoid::ModelAdditions do
     end
 
 
-    # Not working yet because Neography can't delete a node and all of its realtionships in a batch, and deleting a node with relationships results an error
+    # Not working yet because Neography can't delete a node and
+    # all of its realtionships in a batch, and deleting a node
+    # with relationships results an error
+
     # it "should delete nodes in batch" do
     #   u1 = User.create!(name: "U1")
     #   u2 = User.create!(name: "U2")
