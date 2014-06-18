@@ -155,10 +155,10 @@ module Neoid
           end
         end
 
-        query << "(#{query_for_type.join(") AND (")})"
+        query << "(#{query_for_type.join(') AND (')})"
       end
 
-      query = "(#{query.join(") OR (")})"
+      query = "(#{query.join(') OR (')})"
 
       logger.info "Neoid query #{query}"
 
@@ -168,7 +168,7 @@ module Neoid
         idx = g.getRawGraph().index().forNodes('#{DEFAULT_FULLTEXT_SEARCH_INDEX_NAME}')
         hits = idx.query('#{sanitize_query_for_gremlin(query)}')
 
-        hits = #{options[:limit] ? "hits.take(#{options[:limit]})" : "hits"}
+        hits = #{options[:limit] ? "hits.take(#{options[:limit]})" : 'hits'}
 
         #{options[:after_query]}
       GREMLIN
@@ -192,9 +192,9 @@ module Neoid
       query.gsub("'", "\\\\'")
     end
 
-    def generate_field_query(field, term, fulltext = false, match_type = "AND")
+    def generate_field_query(field, term, fulltext = false, match_type = 'AND')
       term = term.to_s if term
-      return "" if term.nil? || term.empty?
+      return '' if term.nil? || term.empty?
 
       fulltext = fulltext ? '_fulltext' : nil
       valid_match_types = %w( AND OR )
