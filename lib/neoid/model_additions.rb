@@ -2,11 +2,11 @@ module Neoid
   module ModelAdditions
     module ClassMethods
       attr_reader :neoid_config
-      
+
       def neoid_config
         @neoid_config ||= Neoid::ModelConfig.new(self)
       end
-      
+
       def neoidable(options = {})
         # defaults
         neoid_config.auto_index = true
@@ -25,7 +25,7 @@ module Neoid
         @index_name ||= "#{self.name.tableize}_index"
       end
     end
-  
+
     module InstanceMethods
       def to_neo
         if self.class.neoid_config.stored_fields
@@ -93,6 +93,7 @@ module Neoid
       end
 
       protected
+
       def neo_properties_to_hash(*attribute_list)
         attribute_list.flatten.inject({}) { |all, property|
           all[property] = self.send(property)
@@ -101,6 +102,7 @@ module Neoid
       end
 
       private
+
       def _neo_representation
         @_neo_representation ||= neo_find_by_id || neo_save
       end
