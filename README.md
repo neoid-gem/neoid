@@ -465,4 +465,4 @@ Unfortunately, as for now, Neo4j add-on on Heroku doesn't support Gremlin. There
 
 ---
 
-Developed by [@elado](http://twitter.com/elado)
+Developed by [@elado](http://twitter.com/elado) and [@BenMorganIO](http://twitter.com/BenMorganIO)
