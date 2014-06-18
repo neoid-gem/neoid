@@ -88,15 +88,15 @@ describe Neoid::Relationship do
         followed.each do |item|
           user.user_follows.create!(item: item)
         end
-      }.to change{ user.neo_node.outgoing(:follows).length }.to(followed.length)
+      }.to change { user.neo_node.outgoing(:follows).length }.to(followed.length)
 
       expect {
         user.user_follows = user.user_follows[0...1]
-      }.to change{ user.neo_node.outgoing(:follows).length }.to(1)
+      }.to change { user.neo_node.outgoing(:follows).length }.to(1)
 
       expect {
         user.user_follows = []
-      }.to change{ user.neo_node.outgoing(:follows).length }.to(0)
+      }.to change { user.neo_node.outgoing(:follows).length }.to(0)
     end
   end
 end
