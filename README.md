@@ -27,7 +27,7 @@ Add to your Gemfile and run the `bundle` command to install it.
 gem 'neoid', '~> 0.1.1'
 ```
 
-**Requires Ruby 1.9.2 or later.**
+**Requires Ruby 1.9.3 or later.**
 
 ## Usage
 
