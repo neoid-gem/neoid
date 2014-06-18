@@ -25,6 +25,8 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'sqlite3'
   s.add_development_dependency 'simplecov'
   s.add_development_dependency 'codeclimate-test-reporter'
+  s.add_development_dependency 'rspec-its'
+  s.add_development_dependency 'factory_girl'
 
   s.add_runtime_dependency 'neography'
 end

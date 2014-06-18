@@ -3,10 +3,14 @@ require 'active_record'
 require 'neography'
 require 'rest-client'
 require 'codeclimate-test-reporter'
+require 'factory_girl'
+require 'rspec/its'
 
 CodeClimate::TestReporter.start
 
 require 'simplecov'
+
+require "factories.rb"
 
 SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
   SimpleCov::Formatter::HTMLFormatter,
@@ -44,6 +48,8 @@ require 'support/models'
 ActiveRecord::Base.logger = logger
 
 RSpec.configure do |config|
+  config.include FactoryGirl::Syntax::Methods
+
   config.mock_with :rspec
 
   config.before(:all) do
