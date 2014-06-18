@@ -3,9 +3,16 @@ require 'active_record'
 require 'neography'
 require 'rest-client'
 require 'codeclimate-test-reporter'
-# ENV['NEOID_LOG'] = 'true'
 
 CodeClimate::TestReporter.start
+
+require 'simplecov'
+
+SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+  SimpleCov::Formatter::HTMLFormatter,
+]
+
+SimpleCov.start
 
 uri = URI.parse('http://localhost:7474')
 $neo = Neography::Rest.new(uri.to_s)
@@ -22,6 +29,10 @@ Neography.configure do |c|
 end
 
 Neoid.db = $neo
+
+Neoid.configure do |config|
+  config.enable_subrefs = false
+end
 
 logger, ActiveRecord::Base.logger = ActiveRecord::Base.logger, Logger.new('/dev/null')
 ActiveRecord::Base.configurations = YAML::load(IO.read(File.join(File.dirname(__FILE__), 'support/database.yml')))

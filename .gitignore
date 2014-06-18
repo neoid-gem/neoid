@@ -4,3 +4,5 @@ Gemfile.lock
 pkg/*
 .DS_Store
 /neo4j
+/neo4j-community-1.9.3
+/coverage
