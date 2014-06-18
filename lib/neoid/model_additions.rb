@@ -15,14 +15,14 @@ module Neoid
         yield(neoid_config) if block_given?
 
         options.each do |key, value|
-          raise "Neoid #{self.name} model options: No such option #{key}" unless neoid_config.respond_to?("#{key}=")
+          raise "Neoid #{name} model options: No such option #{key}" unless neoid_config.respond_to?("#{key}=")
           neoid_config.send("#{key}=", value)
         end
       end
 
       def neo_model_index_name
         raise 'Per Model index is not enabled. Nodes/Relationships are auto indexed with node_auto_index/relationship_auto_index' unless Neoid.config.enable_per_model_indexes || neoid_config.enable_model_index
-        @index_name ||= "#{self.name.tableize}_index"
+        @index_name ||= "#{name.tableize}_index"
       end
     end
 
@@ -33,7 +33,7 @@ module Neoid
             all[field] = if block
               instance_eval(&block)
             else
-              self.send(field) rescue (raise "No field #{field} for #{self.class.name}")
+              send(field) rescue (raise "No field #{field} for #{self.class.name}")
             end
 
             all
@@ -69,7 +69,7 @@ module Neoid
         begin
           neo_representation.del
         rescue Neography::NodeNotFoundException => e
-          Neoid::logger.info "Neoid#neo_destroy entity not found #{self.class.name} #{self.id}"
+          Neoid::logger.info "Neoid#neo_destroy entity not found #{self.class.name} #{id}"
         end
 
         # Not working yet because Neography can't delete a node and all of its realtionships in a batch, and deleting a node with relationships results an error
@@ -89,14 +89,14 @@ module Neoid
       end
 
       def neo_unique_id
-        "#{self.class.name}:#{self.id}"
+        "#{self.class.name}:#{id}"
       end
 
       protected
 
       def neo_properties_to_hash(*attribute_list)
         attribute_list.flatten.inject({}) { |all, property|
-          all[property] = self.send(property)
+          all[property] = send(property)
           all
         }
       end

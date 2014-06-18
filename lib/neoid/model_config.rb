@@ -15,7 +15,7 @@ module Neoid
     end
 
     def field(name, &block)
-      self.stored_fields[name] = block
+      stored_fields[name] = block
     end
 
     def relationship(options)

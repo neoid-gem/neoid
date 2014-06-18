@@ -85,7 +85,7 @@ module Neoid
 
     module InstanceMethods
       def neo_find_by_id
-        results = Neoid.db.get_relationship_auto_index(Neoid::UNIQUE_ID_KEY, self.neo_unique_id)
+        results = Neoid.db.get_relationship_auto_index(Neoid::UNIQUE_ID_KEY, neo_unique_id)
         relationship = results.present? ? Neoid::Relationship.from_hash(results[0]) : nil
         relationship
       end
@@ -95,8 +95,8 @@ module Neoid
 
         options = self.class.neoid_config.relationship_options
 
-        start_item = self.send(options[:start_node])
-        end_item = self.send(options[:end_node])
+        start_item = send(options[:start_node])
+        end_item = send(options[:end_node])
 
         return unless start_item && end_item
 
@@ -104,7 +104,7 @@ module Neoid
         start_item.neo_node
         end_item.neo_node
 
-        data = self.to_neo.merge(ar_type: self.class.name, ar_id: self.id, Neoid::UNIQUE_ID_KEY => self.neo_unique_id)
+        data = to_neo.merge(ar_type: self.class.name, ar_id: id, Neoid::UNIQUE_ID_KEY => neo_unique_id)
         data.reject! { |k, v| v.nil? }
 
         rel_type = options[:type].is_a?(Proc) ? options[:type].call(self) : options[:type]
@@ -136,13 +136,13 @@ module Neoid
         script_vars = {
           unique_id_key: Neoid::UNIQUE_ID_KEY,
           relationship_data: data,
-          unique_id: self.neo_unique_id,
+          unique_id: neo_unique_id,
           start_node_unique_id: start_item.neo_unique_id,
           end_node_unique_id: end_item.neo_unique_id,
           rel_type: rel_type
         }
 
-        Neoid::logger.info "Relationship#neo_save #{self.class.name} #{self.id}"
+        Neoid::logger.info "Relationship#neo_save #{self.class.name} #{id}"
 
         relationship = Neoid.execute_script_or_add_to_batch gremlin_query, script_vars do |value|
           Neoid::Relationship.from_hash(value)
