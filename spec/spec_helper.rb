@@ -23,7 +23,7 @@ Neoid.db = $neo
 
 logger, ActiveRecord::Base.logger = ActiveRecord::Base.logger, Logger.new('/dev/null')
 ActiveRecord::Base.configurations = YAML::load(IO.read(File.join(File.dirname(__FILE__), 'support/database.yml')))
-ActiveRecord::Base.establish_connection('sqlite3')
+ActiveRecord::Base.establish_connection(:sqlite3)
 
 require 'support/schema'
 require 'support/models'
