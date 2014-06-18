@@ -1,6 +1,7 @@
 # Neoid
 
-[![Build Status](https://secure.travis-ci.org/elado/neoid.png)](http://travis-ci.org/elado/neoid)
+[![Code Climate](https://codeclimate.com/github/BenMorganIO/neoid.png)](https://codeclimate.com/github/BenMorganIO/neoid)
+[![Build Status](https://secure.travis-ci.org/BenMorganIO/neoid.png)](http://travis-ci.org/BenMorganIO/neoid)
 
 
 Make your ActiveRecords stored and searchable on Neo4j graph database, in order to make fast graph queries that MySQL would crawl while doing them.
