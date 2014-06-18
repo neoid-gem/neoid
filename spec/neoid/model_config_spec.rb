@@ -16,7 +16,7 @@ describe Neoid::ModelConfig do
 
     it 'should store stored fields based on blocks' do
       article = Article.create! title: 'Hello', year: 2012
-      
+
       article.neo_node.title_length.should == article.title.length
     end
   end

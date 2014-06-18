@@ -3,14 +3,14 @@ require 'spec_helper'
 describe Neoid::ModelAdditions do
   context 'search' do
     let(:index_name) { "articles_search_index_#{Time.now.to_f.to_s.gsub('.', '')}" }
-    
+
     it 'should index and find node in fulltext' do
       Neoid.db.create_node_index(index_name, 'fulltext', 'lucene')
-      
+
       n = Neography::Node.create(name: 'test hello world', year: 2012)
       Neoid.db.add_node_to_index(index_name, 'name', n.name, n)
       Neoid.db.add_node_to_index(index_name, 'year', n.year, n)
-      
+
       [
         'name:test',
         'year:2012',
@@ -21,7 +21,7 @@ describe Neoid::ModelAdditions do
         Neoid.db.send(:get_id, results).should == n.neo_id
       }
     end
-    
+
     it 'should index item on save' do
       r = rand(1000000)
       article = Article.create!(title: "Hello world #{r}", body: 'Lorem ipsum dolor sit amet', year: r)
@@ -46,16 +46,16 @@ describe Neoid::ModelAdditions do
 
       it 'should find hits' do
         article = Article.create!(title: 'Hello world', body: 'Lorem ipsum dolor sit amet', year: 2012)
-        
+
         Article.neo_search('hello').hits.should == [ article.neo_node ]
       end
-      
+
       it 'should find results with a search string' do
         article = Article.create!(title: 'Hello world', body: 'Lorem ipsum dolor sit amet', year: 2012)
 
         Article.neo_search('hello').results.should == [ article ]
       end
-      
+
       it 'should find results with a hash' do
         articles = [
           Article.create!(title: 'How to draw manga', body: 'Lorem ipsum dolor sit amet', year: 2012),

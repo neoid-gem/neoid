@@ -22,11 +22,11 @@ module Neoid
     attr_accessor :ref_node
     attr_accessor :env_loaded
     attr_reader :config
-    
+
     def node_models
       @node_models ||= []
     end
-    
+
     def relationship_models
       @relationship_models ||= []
     end
@@ -68,7 +68,7 @@ module Neoid
       #   logger.error "Failed to initialize neoid: #{e.message}"
       # end
     end
-    
+
     def db
       raise 'Must set Neoid.db with a Neography::Rest instance' unless @db
       # initialize_server unless @initialized_server
@@ -78,19 +78,19 @@ module Neoid
     def batch(options={}, &block)
       Neoid::Batch.new(options, &block).run
     end
-    
+
     def logger
       @logger ||= Logger.new(ENV['NEOID_LOG'] ? ENV['NEOID_LOG_FILE'] || $stdout : '/dev/null')
     end
-    
+
     def ref_node
       @ref_node ||= Neography::Node.load(Neoid.db.get_root['self'])
     end
-    
+
     def reset_cached_variables
       initialize_subrefs
     end
-    
+
     def clean_db(confirm)
       puts 'must call with confirm: Neoid.clean_db(:yes_i_am_sure)' and return unless confirm == :yes_i_am_sure
       Neoid::NeoDatabaseCleaner.clean_db
@@ -222,7 +222,7 @@ module Neoid
 
     def initialize_subrefs
       return unless config.enable_subrefs
-      
+
       node_models.each do |klass|
         klass.reset_neo_subref_node
       end

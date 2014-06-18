@@ -12,7 +12,7 @@ describe Neoid::Node do
       user = User.create!(name: 'Elad Ossadon', slug: 'elado')
 
       user.neo_node.should_not be_nil
-      
+
       user.neo_node.ar_id.should == user.id
       user.neo_node.name.should == user.name
       user.neo_node.slug.should == user.slug
@@ -22,7 +22,7 @@ describe Neoid::Node do
       movie = Movie.create!(name: 'Memento', slug: 'memento-1999', year: 1999)
 
       movie.neo_node.should_not be_nil
-      
+
       movie.neo_node.ar_id.should == movie.id
       movie.neo_node.name.should == movie.name
       movie.neo_node.year.should == movie.year
@@ -51,7 +51,7 @@ describe Neoid::Node do
   context 'find by id' do
     it 'should find a neo_node for user' do
       user = User.create!(name: 'Elad Ossadon', slug: 'elado')
-      
+
       user.neo_node.should_not be_nil
       user.neo_find_by_id.should_not be_nil
     end
@@ -70,7 +70,7 @@ describe Neoid::Node do
       old, Neoid.config.enable_subrefs = Neoid.config.enable_subrefs, true
 
       Neoid.send(:initialize_subrefs)
-      
+
       begin
         Neoid.ref_node.rel(:outgoing, :users_subref).should_not be_nil
       ensure
@@ -82,7 +82,7 @@ describe Neoid::Node do
       old, Neoid.config.enable_subrefs = Neoid.config.enable_subrefs, true
 
       Neoid.send(:initialize_subrefs)
-      
+
       begin
         user = User.create!(name: 'Elad')
         user.neo_node.rel(:incoming, :users).should_not be_nil

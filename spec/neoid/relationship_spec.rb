@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Neoid::Relationship do
   let(:user) { User.create!(name: 'Elad Ossadon', slug: 'elado') }
   let(:movie) { Movie.create!(name: 'Memento', slug: 'memento-1999', year: 1999) }
-  
+
   it 'should call neo_save after relationship model creation' do
     Like.any_instance.should_receive(:neo_save)
     user.like! movie
@@ -16,22 +16,22 @@ describe Neoid::Relationship do
     like.neo_find_by_id.should_not be_nil
 
     like.neo_relationship.should_not be_nil
-    
+
     like.neo_relationship.start_node.should == user.neo_node
     like.neo_relationship.end_node.should == movie.neo_node
     like.neo_relationship.rel_type.should == 'likes'
   end
-  
+
   it 'should delete a relationship on deleting a record' do
     user.like! movie
     like = user.likes.last
-    
+
     relationship_neo_id = like.neo_relationship.neo_id
 
     Neography::Relationship.load(relationship_neo_id).should_not be_nil
-    
+
     user.unlike! movie
-    
+
     expect { Neography::Relationship.load(relationship_neo_id) }.to raise_error(Neography::RelationshipNotFoundException)
   end
 
