@@ -7,7 +7,9 @@ describe Neoid::ModelAdditions do
         batch << [:execute_script, '1']
         batch << [:execute_script, '2']
       end.then do |results|
-        results.should == [1, 2]
+        results.map do |result|
+          result['body']
+        end.should == [1, 2]
       end
     end
 
@@ -29,7 +31,9 @@ describe Neoid::ModelAdditions do
           batch << [:execute_script, i.to_s]
         end
       end.then do |results|
-        results.should == [1, 2, 3, 4, 5, 6]
+        results.map do |result|
+          result['body']
+        end.should == [1, 2, 3, 4, 5, 6]
       end
     end
 
@@ -58,7 +62,9 @@ describe Neoid::ModelAdditions do
         batch << [:execute_script, '3']
         (batch << [:execute_script, '4']).then { |res| then_results << res }
       end.then do |results|
-        results.should == [1, 2, 3, 4]
+        results.map do |result|
+          result['body'].should == [1, 2, 3, 4]
+        end
         then_results.should == [1, 2, 4]
       end
     end
@@ -102,32 +108,6 @@ describe Neoid::ModelAdditions do
       u1.neo_find_by_id.name.should == 'U1 update'
       u2.neo_find_by_id.name.should == 'U2 update'
     end
-
-
-    # Not working yet because Neography can't delete a node and
-    # all of its realtionships in a batch, and deleting a node
-    # with relationships results an error
-
-    # it 'should delete nodes in batch' do
-    #   u1 = User.create!(name: "U1")
-    #   u2 = User.create!(name: "U2")
-
-    #   res = Neoid.batch do
-    #     u1_node_id = u1.neo_find_by_id.neo_id
-    #     u2_node_id = u2.neo_find_by_id.neo_id
-
-    #     u1.destroy
-    #     u2.destroy
-
-    #     Neoid.db.get_node(u1_node_id).should_not be_nil
-    #     Neoid.db.get_node(u2_node_id).should_not be_nil
-    #   end
-
-    #   res.length.should == 2
-
-    #   Neoid.db.get_node(u1_node_id).should be_nil
-    #   Neoid.db.get_node(u2_node_id).should be_nil
-    # end
   end
 
   context 'relationships' do
@@ -135,10 +115,6 @@ describe Neoid::ModelAdditions do
     let(:movie) { Movie.create(name: 'Memento', slug: 'memento-1999', year: 1999) }
 
     it 'should not execute until batch is done' do
-      # ensure user and movie nodes are inserted
-      user
-      movie
-
       res = Neoid.batch do |batch|
         user.like! movie
 
@@ -151,10 +127,6 @@ describe Neoid::ModelAdditions do
     end
 
     it 'should not execute until batch is done' do
-      # ensure user and movie nodes are inserted
-      user
-      movie
-
       # then destroy the nodes, allow the relationship do that in the batch
       user.neo_destroy
       movie.neo_destroy
