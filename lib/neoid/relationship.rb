@@ -11,7 +11,7 @@ module Neoid
         receiver.send :include, Neoid::ModelAdditions
         receiver.send :include, InstanceMethods
         receiver.extend         ClassMethods
-        
+
         initialize_relationship receiver if Neoid.env_loaded
 
         Neoid.relationship_models << receiver
@@ -58,7 +58,6 @@ module Neoid
           full_callback_name = "before_remove_for_#{many_to_many.name}"
           belongs_to.klass.send(full_callback_name) << :neo_before_relationship_through_remove if belongs_to.klass.method_defined?(full_callback_name)
 
-
           # e.g. User has_many :movies, through: :likes, after_remove: ...
           full_callback_name = "after_remove_for_#{many_to_many.name}"
           belongs_to.klass.send(full_callback_name) << :neo_after_relationship_through_remove if belongs_to.klass.method_defined?(full_callback_name)
@@ -90,15 +89,15 @@ module Neoid
         relationship = results.present? ? Neoid::Relationship.from_hash(results[0]) : nil
         relationship
       end
-      
+
       def _neo_save
         return unless Neoid.enabled?
-        
+
         options = self.class.neoid_config.relationship_options
-        
+
         start_item = self.send(options[:start_node])
         end_item = self.send(options[:end_node])
-        
+
         return unless start_item && end_item
 
         # initialize nodes
@@ -144,14 +143,14 @@ module Neoid
         }
 
         Neoid::logger.info "Relationship#neo_save #{self.class.name} #{self.id}"
-        
+
         relationship = Neoid.execute_script_or_add_to_batch gremlin_query, script_vars do |value|
           Neoid::Relationship.from_hash(value)
         end
 
         relationship
       end
-      
+
       def neo_load(hash)
         Neoid::Relationship.from_hash(hash)
       end

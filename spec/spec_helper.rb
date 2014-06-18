@@ -5,7 +5,7 @@ require 'rest-client'
 
 # ENV['NEOID_LOG'] = 'true'
 
-uri = URI.parse(ENV["NEO4J_URL"] ? ENV["NEO4J_URL"] : ENV['TRAVIS'] ? "http://localhost:7474" : "http://localhost:7474")
+uri = URI.parse('http://localhost:7474')
 $neo = Neography::Rest.new(uri.to_s)
 
 Neography.configure do |c|
@@ -35,7 +35,7 @@ RSpec.configure do |config|
 
   config.before(:all) do
   end
-  
+
   config.before(:each) do
     Neoid.node_models.each(&:destroy_all)
     Neoid.clean_db(:yes_i_am_sure)

@@ -49,7 +49,7 @@ module Neoid
 
     def initialize_all
       @env_loaded = true
-      logger.info "Neoid initialize_all"
+      logger.info 'Neoid initialize_all'
       initialize_relationships
       initialize_server
     end
@@ -70,7 +70,7 @@ module Neoid
     end
     
     def db
-      raise "Must set Neoid.db with a Neography::Rest instance" unless @db
+      raise 'Must set Neoid.db with a Neography::Rest instance' unless @db
       # initialize_server unless @initialized_server
       @db
     end
@@ -92,7 +92,7 @@ module Neoid
     end
     
     def clean_db(confirm)
-      puts "must call with confirm: Neoid.clean_db(:yes_i_am_sure)" and return unless confirm == :yes_i_am_sure
+      puts 'must call with confirm: Neoid.clean_db(:yes_i_am_sure)' and return unless confirm == :yes_i_am_sure
       Neoid::NeoDatabaseCleaner.clean_db
     end
 
@@ -133,7 +133,7 @@ module Neoid
     end
 
     def search(types, term, options = {})
-      options = options.reverse_merge(limit: 15,match_type: "AND")
+      options = options.reverse_merge(limit: 15, match_type: 'AND')
 
       types = [*types]
 
@@ -148,7 +148,7 @@ module Neoid
         when String
           search_in_fields = type.neoid_config.search_options.fulltext_fields.keys
           next if search_in_fields.empty?
-          query_for_type << search_in_fields.map{ |field| generate_field_query(field, term, true, options[:match_type]) }.join(" OR ")
+          query_for_type << search_in_fields.map{ |field| generate_field_query(field, term, true, options[:match_type]) }.join(' OR ')
         when Hash
           term.each do |field, value|
             query_for_type << generate_field_query(field, value, false)
@@ -196,23 +196,23 @@ module Neoid
       term = term.to_s if term
       return "" if term.nil? || term.empty?
 
-      fulltext = fulltext ? "_fulltext" : nil
+      fulltext = fulltext ? '_fulltext' : nil
       valid_match_types = %w( AND OR )
       match_type = valid_match_types.delete(match_type)
       raise "Invalid match_type option. Valid values are #{valid_match_types.join(',')}" unless match_type
 
-      "(" + term.split(/\s+/).reject(&:empty?).map{ |t| "#{field}#{fulltext}:#{sanitize_term(t)}" }.join(" #{match_type} ") + ")"
+      '(' + term.split(/\s+/).reject(&:empty?).map{ |t| "#{field}#{fulltext}:#{sanitize_term(t)}" }.join(" #{match_type} ") + ')'
     end
 
     def initialize_relationships
-      logger.info "Neoid initialize_relationships"
+      logger.info 'Neoid initialize_relationships'
       relationship_models.each do |rel_model|
         Relationship.initialize_relationship(rel_model)
       end
     end
 
     def initialize_auto_index
-      logger.info "Neoid initialize_auto_index"
+      logger.info 'Neoid initialize_auto_index'
       Neoid.db.set_node_auto_index_status(true)
       Neoid.db.add_node_auto_index_property(UNIQUE_ID_KEY)
 
@@ -227,7 +227,7 @@ module Neoid
         klass.reset_neo_subref_node
       end
 
-      logger.info "Neoid initialize_subrefs"
+      logger.info 'Neoid initialize_subrefs'
       batch do
         node_models.each(&:neo_subref_node)
       end.then do |results|
@@ -240,7 +240,7 @@ module Neoid
     def initialize_per_model_indexes
       return unless config.enable_per_model_indexes
 
-      logger.info "Neoid initialize_subrefs"
+      logger.info 'Neoid initialize_subrefs'
       batch do
         node_models.each(&:neo_model_index)
       end

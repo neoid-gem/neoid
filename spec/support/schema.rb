@@ -22,7 +22,6 @@ ActiveRecord::Schema.define version: 0 do
     t.timestamps
   end
 
-
   create_table :articles do |t|
     t.string :title
     t.string :body

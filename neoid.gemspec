@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 $:.push File.expand_path("../lib", __FILE__)
 require "neoid/version"
 
@@ -19,6 +18,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   s.add_development_dependency 'rake'
+  s.add_development_dependency 'pry'
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'rest-client'
   s.add_development_dependency 'activerecord'

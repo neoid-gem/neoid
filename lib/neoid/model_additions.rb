@@ -21,7 +21,7 @@ module Neoid
       end
 
       def neo_model_index_name
-        raise "Per Model index is not enabled. Nodes/Relationships are auto indexed with node_auto_index/relationship_auto_index" unless Neoid.config.enable_per_model_indexes || neoid_config.enable_model_index
+        raise 'Per Model index is not enabled. Nodes/Relationships are auto indexed with node_auto_index/relationship_auto_index' unless Neoid.config.enable_per_model_indexes || neoid_config.enable_model_index
         @index_name ||= "#{self.name.tableize}_index"
       end
     end
@@ -35,7 +35,7 @@ module Neoid
             else
               self.send(field) rescue (raise "No field #{field} for #{self.class.name}")
             end
-            
+
             all
           end
 

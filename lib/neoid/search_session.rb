@@ -4,15 +4,15 @@ module Neoid
       @response = response || []
       @models = models
     end
-    
+
     def hits
       @response.map { |x| Neography::Node.new(x) }
     end
 
     def ids
-      @response.collect { |x| x['data']['ar_id'] }
+      @response.map { |x| x['data']['ar_id'] }
     end
-    
+
     def results
       models_by_name = @models.inject({}) { |all, curr| all[curr.name] = curr; all }
 
