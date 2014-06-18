@@ -29,12 +29,6 @@ gem 'neoid', '~> 0.1.1'
 
 **Requires Ruby 1.9.2 or later.**
 
-## Support
-
-Need help with getting neoid up and running? Got a time-consuming problem you want to get solved quickly?  Get [neoid support on CodersClan](http://codersclan.net/?repo_id=326).
-
-<p><a href="http://codersclan.net/?repo_id=326"><img src="http://www.codersclan.net/gs_button/?repo_id=326" width="200" /></a></p>
-
 ## Usage
 
 ### Rails app configuration:
