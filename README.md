@@ -32,7 +32,7 @@ gem 'neoid', '~> 0.1.1'
 
 ### Installing Neo4j 1.9.8 for your project
 
-We're currently working to bump to 2.1.x land, but for now, you have to use 1.9.3. To get started, install neo4j locally in your project with:
+We're currently working to bump to 2.1.x land, but for now, you have to use 1.9.8. To get started, install neo4j locally in your project with:
 
 ```bash
 gem install neo4j-core --pre
