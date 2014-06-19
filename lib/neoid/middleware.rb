@@ -1,4 +1,4 @@
-module Ndoid
+module Neoid
   class Middleware
     def initialize(app)
       @app = app
