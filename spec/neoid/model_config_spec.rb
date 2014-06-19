@@ -12,13 +12,13 @@ describe Neoid::ModelConfig do
       subject(:search_options) { Article.neoid_config.search_options }
 
       it { should_not be_nil }
-      its('index_fields.keys') { should =~ [:title, :body, :year] }
+      its('index_fields.keys') { should match_array([:title, :body, :year]) }
     end
 
     describe '.stored_fields' do
       subject(:stored_fields) { Article.neoid_config.stored_fields }
       it { should_not be_nil }
-      its(:keys) { should =~ [:title, :year, :title_length] }
+      its(:keys) { should match_array([:title, :year, :title_length]) }
       its([:title_length]) { should be_a(Proc) }
     end
   end

@@ -80,11 +80,11 @@ describe Neoid::ModelAdditions do
       end
 
       it 'should search in multiple types' do
-        Neoid.search([Article, Movie], 'manga').results.should =~ @articles + @movies
+        expect(Neoid.search([Article, Movie], 'manga').results).to match_array(@articles + @movies)
       end
 
       it 'should search in single type when specified' do
-        Neoid.search([Article], 'manga').results.should =~ @articles
+        expect(Neoid.search([Article], 'manga').results).to match_array(@articles)
       end
     end
 
