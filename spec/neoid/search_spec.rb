@@ -67,7 +67,7 @@ describe Neoid::ModelAdditions do
       end
     end
 
-    context 'search in multiple types' do
+    context 'in multiple types' do
       before :each do
         @articles = [
           Article.create!(title: 'How to draw manga', body: 'Lorem ipsum dolor sit amet', year: 2012),
@@ -88,28 +88,28 @@ describe Neoid::ModelAdditions do
       end
     end
 
-    context 'search matching types' do
+    context 'matching types' do
       before :each do
-        @articles = [
-          Article.create!(title: 'Comics: How to draw manga', body: 'Lorem ipsum dolor sit amet', year: 2012),
-          Article.create!(title: 'Manga x', body: 'Lorem ipsum dolor sit amet', year: 2012),
-          Article.create!(title: 'hidden secrets of comics masters', body: 'Lorem ipsum dolor sit amet', year: 2012),
-          Article.create!(title: 'hidden secrets of manga comics artists', body: 'Lorem ipsum dolor sit amet', year: 2012)
-        ]
+        Article.create!(title: 'Comics: How to draw manga', body: 'Lorem ipsum dolor sit amet', year: 2012)
+        Article.create!(title: 'Manga x', body: 'Lorem ipsum dolor sit amet', year: 2012)
+        Article.create!(title: 'hidden secrets of comics masters', body: 'Lorem ipsum dolor sit amet', year: 2012)
+        Article.create!(title: 'hidden secrets of manga comics artists', body: 'Lorem ipsum dolor sit amet', year: 2012)
       end
 
-      it 'should return search results only matches with AND' do
-        expect(Neoid.search([Article],'manga comics').results.size).to eq(1)
-
-        expect(Neoid.search([Article],'manga comics', match_type: 'AND').results.size).to eq(1)
+      it 'will match by keyword' do
+        expect(Neoid.search([Article], 'manga comics').results.size).to eq(1)
       end
 
-      it 'should return search results all results with OR' do
-        expect(Neoid.search([Article],'manga comics', match_type: 'OR').results.size).to eq(4)
+      it 'will match with AND' do
+        expect(Neoid.search([Article], 'manga comics', match_type: 'AND').results.size).to eq(1)
       end
 
-      it 'should fail with wrong match_type' do
-        expect {Neoid.search([Article],'manga comics', match_type: 'MAYBE')}.to raise_error('Invalid match_type option. Valid values are AND,OR')
+      it 'will match with OR' do
+        expect(Neoid.search([Article], 'manga comics', match_type: 'OR').results.size).to eq(4)
+      end
+
+      it 'will fail with wrong match_type' do
+        expect { Neoid.search([Article], 'manga comics', match_type: 'MAYBE') }.to raise_error('Invalid match_type option. Valid values are AND,OR')
       end
     end
   end
