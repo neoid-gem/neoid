@@ -13,7 +13,9 @@ Neoid does not require JRuby. It's based on the [Neography](https://github.com/m
 
 Neoid offers querying Neo4j for IDs of objects and then fetch them from your RDBMS, or storing all desired data on Neo4j.
 
-**Important: Heroku Support is not available because Herokud doesn't support Gremlin. So until further notice, easiest way is to self host a Neo4j on EC2 in the same zone, and connect from your dyno to it. Removing Gremlin is currently #1 on the priority list.**
+**Important: Heroku Support is not available because Heroku does not support Gremlin. Removing Gremlin is currently #1 on the priority list.**
+
+__If you are hosting your application on Heroku with Neoid, [GrapheneDB](http://www.graphenedb.com/) does support Gremlin code; their add-on is [located here](https://addons.heroku.com/graphenedb). Also be reminded that the gremlin code is actively being refactored into Cypher.__
 
 ## Changelog
 
