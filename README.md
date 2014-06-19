@@ -459,16 +459,9 @@ Run the Neo4j DB on port 7474, and run `rake` from the gem folder.
 
 Please create a [new issue](https://github.com/elado/neoid/issues) if you run into any bugs. Contribute patches via pull requests. Write tests and make sure all tests pass.
 
-
-## Heroku Support
-
-Unfortunately, as for now, Neo4j add-on on Heroku doesn't support Gremlin. Therefore, this gem won't work on Heroku's add on. You should self-host a Neo4j instance on an EC2 or any other server.
-
-
 ## TO DO
 
 [TO DO](https://github.com/elado/neoid/blob/master/TODO.md)
-
 
 ---
 
