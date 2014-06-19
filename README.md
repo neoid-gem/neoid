@@ -26,7 +26,7 @@ __Important: If you are hosting your application on Heroku with Neoid, [Graphene
 Add to your Gemfile and run the `bundle` command to install it.
 
 ```ruby
-gem 'neoid', '~> 0.1.1'
+gem 'neoid', '~> 0.2.0'
 ```
 
 **Requires Ruby 1.9.3 or later and Neo4j 1.9.8.**
