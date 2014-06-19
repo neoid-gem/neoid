@@ -46,10 +46,6 @@ describe Neoid::Node do
   end
 
   context 'per_model_indexes' do
-    before(:each) do
-      Neoid.config.enable_per_model_indexes = false
-    end
-
     it 'should create a relationship with a subref node' do
       Neoid.config.enable_per_model_indexes = true
       Neoid.send(:initialize_per_model_indexes)
@@ -65,7 +61,7 @@ describe Neoid::Node do
       begin
         expect { Neoid.db.get_node_index(User.neo_model_index_name, 'ar_id', user.id) }.to raise_error(Neography::NotFoundException)
       ensure
-        Neoid.config.enable_per_model_indexes = true
+        Neoid.config.enable_per_model_indexes = false
       end
     end
   end
