@@ -6,7 +6,7 @@ require 'codeclimate-test-reporter'
 require 'factory_girl'
 require 'rspec/its'
 
-CodeClimate::TestReporter.start
+CodeClimate::TestReporter.start if ENV['CODECLIMATE_REPO_TOKEN']
 
 require 'simplecov'
 

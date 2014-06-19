@@ -28,15 +28,15 @@ Add to your Gemfile and run the `bundle` command to install it.
 gem 'neoid', '~> 0.1.1'
 ```
 
-**Requires Ruby 1.9.3 or later and Neo4j 1.9.3.**
+**Requires Ruby 1.9.3 or later and Neo4j 1.9.8.**
 
-### Installing Neo4j 1.9.3 for your project
+### Installing Neo4j 1.9.8 for your project
 
 We're currently working to bump to 2.1.x land, but for now, you have to use 1.9.3. To get started, install neo4j locally in your project with:
 
 ```bash
 gem install neo4j-core --pre
-rake neo4j:install[community,1.9.3]
+rake neo4j:install[community,1.9.8]
 rake neo4j:start
 ```
 

@@ -1,13 +1,13 @@
 require 'spec_helper'
 
 describe Neoid::Config do
-  context 'config' do
-    it 'should store and read config' do
-      Neoid.configure do |config|
-        config.enable_subrefs = false
-      end
+  subject(:config) { Neoid.config }
 
-      Neoid.config.enable_subrefs.should == false
+  describe '.enable_subrefs' do
+    before(:all) do
+      Neoid.configure { |c| c.enable_subrefs = false }
     end
+
+    its(:enable_subrefs) { should == false }
   end
 end

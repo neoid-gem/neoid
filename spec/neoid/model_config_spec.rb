@@ -3,21 +3,23 @@ require 'fileutils'
 
 describe Neoid::ModelConfig do
   context 'config on a model' do
-    it 'should store search fields' do
-      Article.neoid_config.search_options.should_not be_nil
-      Article.neoid_config.search_options.index_fields.keys.should =~ [ :title, :body, :year ]
+    it 'stores stored_fields based on blocks' do
+      article = Article.create!(title: 'Hello', year: 2012)
+      expect(article.neo_node.title_length).to eq(article.title.length)
     end
 
-    it 'should store stored fields' do
-      Article.neoid_config.stored_fields.should_not be_nil
-      Article.neoid_config.stored_fields.keys.should =~ [ :title, :year, :title_length ]
-      Article.neoid_config.stored_fields[:title_length].should be_a(Proc)
+    describe '.search_options' do
+      subject(:search_options) { Article.neoid_config.search_options }
+
+      it { should_not be_nil }
+      its('index_fields.keys') { should match_array([:title, :body, :year]) }
     end
 
-    it 'should store stored fields based on blocks' do
-      article = Article.create! title: 'Hello', year: 2012
-
-      article.neo_node.title_length.should == article.title.length
+    describe '.stored_fields' do
+      subject(:stored_fields) { Article.neoid_config.stored_fields }
+      it { should_not be_nil }
+      its(:keys) { should match_array([:title, :year, :title_length]) }
+      its([:title_length]) { should be_a(Proc) }
     end
   end
 end
