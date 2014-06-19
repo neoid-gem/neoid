@@ -4,17 +4,15 @@ require 'neoid/version'
 Gem::Specification.new do |s|
   s.name        = 'neoid'
   s.version     = Neoid::VERSION
-  s.authors     = ['Ben Morgan']
-  s.email       = ['ben@benmorgan.io']
-  s.homepage    = ''
-  s.summary     = %q(Neo4j for ActiveRecord)
-  s.description = %q(Extend Ruby on Rails ActiveRecord with Neo4j nodes. Keep RDBMS and utilize the power of Neo4j queries. Originally by @elado.)
+  s.authors     = ['Ben Morgan', 'Elad Ossadon']
+  s.email       = ['ben@benmorgan.io', 'elad@ossadon.com']
+  s.homepage    = 'https://github.com/neoid-gem/neoid'
+  s.summary     = 'Neo4j for ActiveRecord'
+  s.description = 'Extend Ruby on Rails ActiveRecord with Neo4j nodes. Keep RDBMS and utilize the power of Neo4j queries. Originally by @elado.'
+  s.license     = 'MIT'
 
-  s.rubyforge_project = 'neoid'
-
-  s.files         = `git ls-files`.split('\n')
-  s.test_files    = `git ls-files -- {test,spec,features}/*`.split('\n')
-  s.executables   = `git ls-files -- bin/*`.split('\n').map{ |f| File.basename(f) }
+  s.files = Dir['{app,config,db,lib}/**/*', 'LICENSE', 'Rakefile', 'README.md']
+  s.test_files = Dir['spec/**/*']
   s.require_paths = ['lib']
 
   s.add_development_dependency 'rake'
