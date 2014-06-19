@@ -17,8 +17,8 @@ describe Neoid::ModelAdditions do
         'name:test AND year:2012'
       ].each { |q|
         results = Neoid.db.find_node_index(index_name, q)
-        results.length.should == 1
-        Neoid.db.send(:get_id, results).should == n.neo_id
+        expect(results.length).to eq(1)
+        expect(Neoid.db.send(:get_id, results)).to eq(n.neo_id)
       }
     end
 
@@ -33,27 +33,27 @@ describe Neoid::ModelAdditions do
       ].each do |q|
         results = Neoid.db.find_node_index(Neoid::DEFAULT_FULLTEXT_SEARCH_INDEX_NAME, q)
 
-        results.should_not be_nil
-        results.length.should == 1
-        Neoid.db.send(:get_id, results).should == article.neo_node.neo_id
+        expect(results).to_not be_nil
+        expect(results.length).to eq(1)
+        expect(Neoid.db.send(:get_id, results)).to eq(article.neo_node.neo_id)
       end
     end
 
     context 'search session' do
       it 'should return a search session' do
-        Article.neo_search('hello').should be_a(Neoid::SearchSession)
+        expect(Article.neo_search('hello')).to be_a(Neoid::SearchSession)
       end
 
       it 'should find hits' do
         article = Article.create!(title: 'Hello world', body: 'Lorem ipsum dolor sit amet', year: 2012)
 
-        Article.neo_search('hello').hits.should == [ article.neo_node ]
+        expect(Article.neo_search('hello').hits).to eq([article.neo_node])
       end
 
       it 'should find results with a search string' do
         article = Article.create!(title: 'Hello world', body: 'Lorem ipsum dolor sit amet', year: 2012)
 
-        Article.neo_search('hello').results.should == [ article ]
+        expect(Article.neo_search('hello').results).to eq([article])
       end
 
       it 'should find results with a hash' do
@@ -63,7 +63,7 @@ describe Neoid::ModelAdditions do
         ]
 
 
-        Article.neo_search(year: 2012).results.should == [ articles[0] ]
+        expect(Article.neo_search(year: 2012).results).to eq([articles[0]])
       end
     end
 
@@ -99,13 +99,13 @@ describe Neoid::ModelAdditions do
       end
 
       it 'should return search results only matches with AND' do
-        Neoid.search([Article],'manga comics').results.size.should eq(1)
+        expect(Neoid.search([Article],'manga comics').results.size).to eq(1)
 
-        Neoid.search([Article],'manga comics', match_type: 'AND').results.size.should eq(1)
+        expect(Neoid.search([Article],'manga comics', match_type: 'AND').results.size).to eq(1)
       end
 
       it 'should return search results all results with OR' do
-        Neoid.search([Article],'manga comics', match_type: 'OR').results.size.should eq(4)
+        expect(Neoid.search([Article],'manga comics', match_type: 'OR').results.size).to eq(4)
       end
 
       it 'should fail with wrong match_type' do
