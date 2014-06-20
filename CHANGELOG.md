@@ -1,3 +1,9 @@
+## v0.2.1
+There was a typo that occurred in the middleware, but was also existing inside the railtie file. This has been fixed.
+
+## v0.2.0
+Gem is put back into active development. A large amount of tests are now passing with several bug fixes.
+
 ## v0.1.2
 Just design changes under the hood to keep this gem working and actively maintained.
 
