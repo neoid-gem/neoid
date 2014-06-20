@@ -9,7 +9,7 @@ module Neoid
     end
 
     initializer 'neoid.inject_middleware' do |app|
-      app.middleware.use Ndoid::Middleware
+      app.middleware.use Neoid::Middleware
     end
   end
 end
