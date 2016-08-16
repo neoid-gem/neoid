@@ -40,6 +40,7 @@ gem install neo4j-core --pre
 rake neo4j:install[community,1.9.8]
 rake neo4j:start
 ```
+check your neo4j server in browser http://localhost:7474/browser/
 
 ## Usage
 
@@ -48,7 +49,7 @@ rake neo4j:start
 Initializer neography and neoid in an initializer that is prefixed with `01_`, such as `config/initializers/01_neo4j.rb`:
 
 ```ruby
-ENV["NEO4J_URL"] ||= "http://localhost:7474"
+ENV["NEO4J_URL"] ||= "http://neo4j:neo4j@localhost:7474"  #Your Neo4j server must be running on port 7474
 
 uri = URI.parse(ENV["NEO4J_URL"])
 
